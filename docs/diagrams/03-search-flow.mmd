@@ -1,0 +1,38 @@
+%% LLD: data flow for a new search (POST /api/search).
+sequenceDiagram
+    autonumber
+    actor R as Recruiter
+    participant UI as Search page
+    participant API as POST /api/search
+    participant Q as private.spend_search_credit()
+    participant L as Anthropic (Haiku 5.5)
+    participant V as Filter validator (zod + vocabulary)
+    participant S as private.run_search()
+
+    R->>UI: types brief, presses Enter
+    UI->>API: { brief } + Bearer token
+    API->>API: verify token, find company, brief length 1 to 500
+    API->>Q: spend one search credit for this company (secret-key client)
+    Note over Q: one UPDATE ... WHERE paid OR searches_used < 1 RETURNING<br/>row lock: concurrent requests queue, only one wins
+    alt no searches left
+        Q-->>API: no row
+        API-->>UI: 402 { searches_remaining: 0 }
+        UI-->>R: "You've used your free search" + Upgrade
+    else credit spent
+        Q-->>API: searches_remaining
+        API->>L: system rules + brief inside tags, forced tool call,<br/>tool schema whose values are enums from our data
+        L-->>API: { filters, unsupported[] }
+        API->>V: parse, drop anything not in the vocabulary, clamp years
+        alt LLM error or timeout (2.5s)
+            API->>Q: give the search credit back
+            API-->>UI: 503 "Search is unavailable, try again"
+        else valid
+            V-->>API: clean filters
+            Note over API: if no filters, or a hard requirement is in unsupported[],<br/>the search returns 0 people (never "everyone")
+            API->>S: company_id, brief, filters as parameters (static SQL)
+            Note over S: WHERE role = ANY(...) AND skills @> ... AND ...<br/>ORDER BY score DESC, id<br/>INSERT ranked ids into search_results
+            S-->>API: search_id, total, first 20
+            API-->>UI: { search_id, filters, unsupported, total, results, searches_remaining }
+            UI-->>R: filter tags + ranked results
+        end
+    end

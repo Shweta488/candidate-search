@@ -1,0 +1,35 @@
+%% LLD: Stripe webhook handling. One Postgres transaction per event.
+sequenceDiagram
+    autonumber
+    participant ST as Stripe (simulated)
+    participant API as POST /api/billing/events
+    participant DB as private.apply_stripe_event()
+    participant PL as GET /api/plan
+
+    ST->>API: raw body (bytes untouched) + Stripe-Signature
+    API->>API: parse t= and v1= from the header<br/>HMAC-SHA256(secret, t + "." + raw body)<br/>timingSafeEqual against each v1
+    alt signature missing or wrong
+        API-->>ST: 400
+    else valid
+        alt not customer.subscription.*, or unknown company
+            API-->>ST: 200 (recorded as ignored)
+        else subscription event
+            API->>DB: event id, type, created, sub id, status, metadata.company
+            DB->>DB: INSERT INTO stripe_events ON CONFLICT (id) DO NOTHING
+            alt event id already seen (repeat)
+                DB-->>API: duplicate
+                API-->>ST: 200, nothing changes
+            else first time
+                DB->>DB: SELECT subscription FOR UPDATE
+                alt event.created < last_event_created
+                    DB-->>API: stale (older event arrived late), not applied
+                else newer, or same second (tie rule in ARCHITECTURE.md)
+                    DB->>DB: upsert status, last_event_created, last_event_id
+                end
+                API-->>ST: 200
+            end
+        end
+    end
+
+    Note over PL,DB: plan = 'paid' when any subscription of the company<br/>has status active or trialing, else 'free'.<br/>Computed on read, so it can never drift from the events.
+    PL->>DB: plan + searches_used
