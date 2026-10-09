@@ -128,7 +128,7 @@ Branch `s7-billing`. FR7. LLD 5.
 ### S8 Hardening and docs
 Branch `s8-hardening`.
 
-- **Done when:** latency targets are met, the bundle scan passes, every screen passes the accessibility check, and the README is final, with screenshots of the app.
+- **Done when:** latency targets are met, the bundle scan passes, every screen passes the accessibility check, and the README is final, with screenshots of the app and a setup troubleshooting note (for example Docker out of disk space).
 - **Tests:** latency integration test; `check:secrets`; `cy.checkA11y()` on every screen at desktop and phone width.
 - **Commits:**
   - `perf(search): tune prompt and timeouts against latency budget`

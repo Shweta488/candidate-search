@@ -805,7 +805,7 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 
 ### 7.1 Prerequisites
 
-Docker Desktop running with about 5 GB of free disk, Node 24 (pinned in `.nvmrc` and `package.json` `engines`), and two values exported in the shell before `make dev`: `ANTHROPIC_API_KEY` and `STRIPE_WEBHOOK_SECRET`.
+Docker Desktop running, Node 24 (pinned in `.nvmrc` and `package.json` `engines`), and two values exported in the shell before `make dev`: `ANTHROPIC_API_KEY` and `STRIPE_WEBHOOK_SECRET`.
 
 ### 7.2 Makefile targets
 
