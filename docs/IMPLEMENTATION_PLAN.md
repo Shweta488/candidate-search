@@ -55,8 +55,8 @@ Branch `s1-sign-in-plan`. FR6. LLD 2 (companies, recruiters), 4, 6.1 to 6.4, 6.7
   - `feat(db): seed companies and recruiters`
   - `feat(auth): verify bearer tokens and resolve the company`
   - `feat(plan): add plan functions and GET /api/plan`
-  - `feat(ui): add design tokens, layout and sign-in`
-  - `feat(ui): add session, plan context and plan pill`
+  - `feat(ui): add sign-in, app layout and plan pill`
+  - `test(e2e): add Cypress sign-in spec`
 
 ### S2 Search by brief
 Branch `s2-search`. FR1. LLD 3, 4.6, 6.5 to 6.7. The largest story; if it runs long, it is split into "search API" and "search page" PRs.

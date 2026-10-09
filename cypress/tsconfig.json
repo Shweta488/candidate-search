@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "cypress",
+      "cypress-axe",
+      "node"
+    ],
+    "isolatedModules": false
+  },
+  "include": [
+    "**/*.ts",
+    "../cypress.config.ts"
+  ],
+  "exclude": [
+    "screenshots",
+    "videos"
+  ]
+}
