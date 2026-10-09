@@ -17,6 +17,7 @@
     "e2e:open": "env -u ELECTRON_RUN_AS_NODE cypress open"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.128.0",
     "@supabase/supabase-js": "2.117.1",
     "next": "16.3.8",
     "react": "19.2.8",

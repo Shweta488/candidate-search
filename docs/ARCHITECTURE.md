@@ -154,7 +154,7 @@ Secrets are never prefixed `NEXT_PUBLIC_`, server modules import `server-only`, 
 
 ### 6.7 Latency
 
-Paging is a primary-key read. A new search uses Haiku with a cached prompt, short output and a 2.5 s timeout; SQL takes under 20 ms. Each search logs LLM, SQL and total time.
+Paging is a primary-key read. A new search uses Haiku with a cached prompt, short output and a 2.8 s timeout; SQL takes under 20 ms. Each search logs LLM, SQL and total time.
 
 ## 7. Product decisions (confirmed October 8)
 
