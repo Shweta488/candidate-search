@@ -99,4 +99,14 @@ export type Candidate = CandidateSummary & {
   country: string;
   experiences: Experience[];
   education: Education[];
+  shortlist_ids: string[]; // the caller's company's lists this candidate is on
+};
+
+// Shortlists (LLD 1.5).
+export type ShortlistSummary = { id: string; name: string; member_count: number; created_at: string };
+export type Shortlist = {
+  id: string;
+  name: string;
+  created_at: string;
+  members: { added_at: string; candidate: CandidateSummary }[]; // most recently added first
 };
