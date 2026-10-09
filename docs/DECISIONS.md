@@ -18,7 +18,7 @@ Decisions made while designing this project, with the reason for each. Reasons a
 | Oct 8 | Billing | Paid means a subscription with status `active` or `trialing` | `past_due`, `incomplete`, `unpaid` and `canceled` stay on the free plan |
 | Oct 8 | Security | Candidates readable only through the server, not directly through Supabase | Prevents bypassing the free-plan limit |
 | Oct 8 | Database | Two schemas: `public` holds only the tables a recruiter uses with their own token (recruiters, shortlists, shortlist members, saved searches), all under RLS; everything else (candidates, companies, searches, billing, SQL functions) lives in `private`, reachable only by the server | Keeps the RLS surface to four tables, and data a recruiter must never read has no access path at all, instead of sitting in `public` behind a deny-all policy that one later grant could undo |
-| Oct 8 | Workflow | One branch and pull request per milestone, merged with a merge commit or rebase (never squash) | Keeps a readable, incremental history |
+| Oct 8 | Workflow | Work split into stories (vertical slices: database, API, UI and tests for one feature), each with a plan reviewed before coding; one branch and pull request per story, merged with a merge commit or rebase (never squash) | Every merged story works end to end, and history stays readable and incremental |
 
 ## Facts from the data that shaped these decisions
 

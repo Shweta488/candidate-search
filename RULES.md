@@ -8,7 +8,7 @@ These rules apply to everyone who changes this repo, human or AI assistant. `CLA
 2. Nothing is pushed without a **second, separate** approval ("approved to push"). Approval to commit is never approval to push.
 3. Before asking for approval, show: what changed, why, how it was checked, and the proposed commit message.
 4. One logical change per commit. Follow the plan in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md); if the plan changes, update it in the same commit.
-5. One branch and one pull request per milestone, branched from the latest `main`. Never commit directly to `main`. Pull requests are merged by Shweta with a merge commit or rebase, never squash.
+5. One branch and one pull request per story (see the plan), each started only after its story plan is reviewed, branched from the latest `main`. Never commit directly to `main`. Pull requests are merged by Shweta with a merge commit or rebase, never squash.
 6. Never rewrite pushed history (`push --force`, rebase of pushed commits) without explicit approval.
 7. Prefer plain code over clever code, and explain non-obvious code in the review summary and pull request description.
 
