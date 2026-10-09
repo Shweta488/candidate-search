@@ -110,3 +110,6 @@ export type Shortlist = {
   created_at: string;
   members: { added_at: string; candidate: CandidateSummary }[]; // most recently added first
 };
+
+// Saved searches (LLD 1.6). Newest first.
+export type SavedBrief = { id: string; brief: string; filters: Filters; created_at: string };

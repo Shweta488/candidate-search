@@ -4,6 +4,7 @@ import type { Filters, SearchResponse } from "@/shared/types";
 import { logError, logSearch } from "../log";
 import { refundSearchCredit, spendSearchCredit } from "../plan";
 import { serverClient } from "../supabase";
+import { Brief } from "./brief";
 import { extractFilters } from "./extractFilters";
 import { filtersSchema, hasAnyFilter } from "./filterSchema";
 import { getSearchPage } from "./getSearchPage";
@@ -13,11 +14,7 @@ import { getVocabulary } from "./vocabulary";
 // Whenever the search can't run after the credit was spent, the credit is given back.
 
 export const SearchBody = z.object({
-  // Postgres can't store the NUL character in text, so it is removed first.
-  brief: z
-    .string()
-    .transform((brief) => brief.replaceAll("\u0000", ""))
-    .pipe(z.string().trim().min(1).max(500)),
+  brief: Brief,
   filters: z.unknown().optional(), // validated against the vocabulary in runSearch
 });
 
