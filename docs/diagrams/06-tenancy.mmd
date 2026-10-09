@@ -1,0 +1,21 @@
+%% LLD: how tenant isolation holds on both paths (our API and direct Supabase).
+flowchart TB
+    A["Acme recruiter token<br/>(JWT, sub = acme user id)"]
+
+    A --> API["Our API route"]
+    A --> PR["Direct PostgREST call<br/>/rest/v1/shortlists?..."]
+
+    API --> UC["User client<br/>same JWT forwarded"]
+    UC --> PG
+    PR --> PG
+
+    subgraph PG["Postgres, role = authenticated"]
+        F["public.my_company_id()<br/>SECURITY DEFINER, looks up recruiters by auth.uid()"]
+        POL["Row level security on shortlists, shortlist_members,<br/>saved_briefs, searches, search_results<br/>read rule (USING): only rows where company_id = my company<br/>write rule (WITH CHECK): new or changed rows must have my company"]
+        COL["company_id DEFAULT my_company_id(),<br/>no UPDATE grant on company_id"]
+        REV["No grants to anon/authenticated on:<br/>candidates tables, companies counter,<br/>private schema (functions + billing tables)"]
+        F --> POL
+    end
+
+    PG --> OK["Acme rows only"]
+    PG --> NO["Globex rows: 0 rows on read,<br/>writes rejected"]
