@@ -37,17 +37,27 @@ describe("direct Supabase access", () => {
     expect(data ?? []).toHaveLength(0);
   });
 
-  it.each(["companies", "subscriptions"])("refuses private.%s to a recruiter", async (table) => {
+  const PRIVATE_TABLES = ["companies", "subscriptions", "candidates", "experiences", "educations", "searches"];
+
+  it.each([...PRIVATE_TABLES, "search_results"])("refuses private.%s to a recruiter", async (table) => {
     const acme = await signIn(RECRUITERS.acme);
     const { data, error } = await acme.client.schema("private").from(table).select("*");
     expect(error).not.toBeNull();
     expect(data).toBeNull();
   });
 
-  it("refuses private functions to a recruiter", async () => {
+  it.each([
+    ["get_plan", {}],
+    ["spend_search_credit", {}],
+    ["refund_search_credit", {}],
+    ["get_vocabulary", null],
+    ["get_search_page", { p_search_id: "00000000-0000-4000-8000-000000000000", p_page: 1 }],
+    ["run_search", { p_brief: "x", p_filters: {}, p_unsupported: [], p_return_nobody: false }],
+  ] as const)("refuses private.%s to a recruiter", async (fn, extra) => {
     const acme = await signIn(RECRUITERS.acme);
     const { data: own } = await acme.client.from("recruiters").select("company_id").single();
-    const { data, error } = await acme.client.schema("private").rpc("get_plan", { p_company_id: own?.company_id });
+    const args = extra === null ? undefined : { p_company_id: own?.company_id, ...extra };
+    const { data, error } = await acme.client.schema("private").rpc(fn, args);
     expect(error).not.toBeNull();
     expect(data).toBeNull();
   });
