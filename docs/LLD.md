@@ -94,6 +94,7 @@ Response `200`:
   "total": 21,
   "page": 1,
   "page_size": 20,
+  "total_pages": 2,
   "results": [ "CandidateSummary × up to 20, best first" ],
   "searches_remaining": 0
 }
@@ -153,7 +154,7 @@ Re-running a saved search is `POST /api/search` with its `brief` and `filters`.
 **`GET /api/vocabulary`** returns the allowed values for the filter editor:
 
 ```json
-{ "roles": [], "seniorities": [], "cities": [], "skills": [], "schools": [],
+{ "roles": [], "seniorities": [], "cities": [], "states": [], "skills": [], "schools": [],
   "degrees": [], "fields_of_study": [], "companies": [], "company_types": [],
   "years_experience": { "min": 0, "max": 15 } }
 ```
