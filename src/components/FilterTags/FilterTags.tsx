@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import {
   addValue,
   removeValue,
@@ -18,12 +18,18 @@ import styles from "./FilterTags.module.css";
 // tag to change it, × to remove it, "+ Add filter" to add one (LLD 6.5). Changes only
 // update the draft; the page decides when to run them.
 
-type Props = { filters: Filters; onChange?: (filters: Filters) => void };
+// headingLevel: h3 where the tags sit under another h2, such as a saved search.
+type Props = {
+  filters: Filters;
+  onChange?: (filters: Filters) => void;
+  headingLevel?: "h2" | "h3";
+};
 
 type Editing = { mode: "add" } | { mode: "change"; tag: Tag };
 
-export function FilterTags({ filters, onChange }: Props) {
+export function FilterTags({ filters, onChange, headingLevel: Heading = "h2" }: Props) {
   const tags = tagsFor(filters);
+  const headingId = useId(); // unique, as a page can show several sets of tags
   const [editing, setEditing] = useState<Editing | null>(null);
   const addButton = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -60,10 +66,10 @@ export function FilterTags({ filters, onChange }: Props) {
   return (
     <div className={styles.block}>
       <div className={styles.filters}>
-        <h2 className={styles.heading} id="filters-heading">
+        <Heading className={styles.heading} id={headingId}>
           Filters
-        </h2>
-        <ul className={styles.list} aria-labelledby="filters-heading">
+        </Heading>
+        <ul className={styles.list} aria-labelledby={headingId}>
           {tags.map((tag) => (
             <li key={`${tag.field}:${String(tag.value)}`} className={styles.tag}>
               {onChange ? (

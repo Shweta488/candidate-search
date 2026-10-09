@@ -8,7 +8,11 @@ These rules apply to everyone who changes this repo, human or AI assistant. `CLA
 2. Nothing is pushed without a **second, separate** approval ("approved to push"). Approval to commit is never approval to push.
 3. Before asking for approval, show: what changed, why, how it was checked, and the proposed commit message.
 4. One logical change per commit. Follow the plan in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md); if the plan changes, update it in the same commit.
-5. One branch and one pull request per story (see the plan), each started only after its story plan is reviewed, branched from the latest `main`. Never commit directly to `main`. Pull requests are merged by Shweta with a merge commit or rebase, never squash.
+5. One branch and one pull request per story (see the plan). Never commit directly to `main`. Pull requests are merged by Shweta with a merge commit or rebase, never squash. Each story runs in this order:
+   1. Pull the latest `main` and create the story's branch from it.
+   2. Write the story plan and wait for Shweta to review and approve it.
+   3. Implement the approved plan.
+   4. Ask for approval to commit (rule 1), then separately for approval to push (rule 2).
 6. Never rewrite pushed history (`push --force`, rebase of pushed commits) without explicit approval.
 7. Prefer plain code over clever code, and explain non-obvious code in the review summary and pull request description.
 
@@ -63,6 +67,12 @@ npm test            # Jest unit tests
 ```
 
 Plus, when the change touches them: `npm run test:integration` (Jest, against the running stack), `npm run e2e` (Cypress), `npm run eval:search`, `npm run check:secrets` (see [`docs/TESTING.md`](docs/TESTING.md)).
+
+**Claude API calls cost money.** Only call the model when the change needs it:
+
+- Tests that call Claude: `tests/integration/hostile.test.ts`, `cypress/e2e/search.cy.ts` and `npm run eval:search`. Run them only when the change touches the brief-to-filters path (prompt, `extractFilters`, filter validation of LLM output), and ask Shweta before running them.
+- Otherwise run the test files the change touches by path instead of the whole suite, because `npm run test:integration` and `npm run e2e` include the files above: `npx jest --config jest.integration.config.ts --runInBand <file>` and `npm run e2e -- --spec <file>`.
+- New tests send `filters` with a search (which skips the model) or fake the search response, unless the model itself is under test.
 
 ## 7. Files that must never be committed
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { api, toApiError, type ApiError } from "@/client/api";
 import { usePlan } from "@/client/plan";
 import { sameFilters } from "@/client/filterDraft";
@@ -47,9 +47,16 @@ function Search() {
 
   const [posted, setPosted] = useState<SearchResponse | null>(null);
   const [searching, setSearching] = useState(false);
-  const [postError, setPostError] = useState<{ brief: string; filters?: Filters; error: ApiError } | null>(null);
+  const [postError, setPostError] = useState<{
+    brief: string;
+    filters?: Filters;
+    error: ApiError;
+  } | null>(null);
   // Filters the recruiter is editing, for the search they were shown on.
-  const [draft, setDraft] = useState<{ searchId: string; filters: Filters } | null>(null);
+  const [draft, setDraft] = useState<{
+    searchId: string;
+    filters: Filters;
+  } | null>(null);
   const [example, setExample] = useState(""); // an example brief the recruiter picked
 
   // Page 1 of a search we just ran is already here; anything else is read from the API.
@@ -248,8 +255,8 @@ function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSe
           )
         }
       >
-        We search on role, seniority, location, skills, education and past companies. We&apos;re showing nobody
-        rather than the wrong people.
+        We search on role, seniority, location, skills, education and past companies. We&apos;re showing nobody rather
+        than the wrong people.
       </StatePanel>
     );
   }
@@ -280,6 +287,7 @@ function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSe
             Page {page.page} of {page.total_pages}
           </span>
         )}
+        <SaveSearch key={page.search_id} brief={page.brief} filters={page.filters} />
       </div>
       {page.results.length > 0 ? (
         <div className={styles.cards}>
@@ -300,6 +308,57 @@ function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSe
       )}
       <Pager searchId={page.search_id} page={page.page} totalPages={page.total_pages} />
     </>
+  );
+}
+
+// Saves the search as it ran: its brief and the filters used, not unsaved edits (LLD 6.5).
+// Only offered with results, so never for a search with "Couldn't filter on" items, which
+// re-running from its filters alone would turn into a different search.
+function SaveSearch({ brief, filters }: { brief: string; filters: Filters }) {
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const savedLink = useRef<HTMLAnchorElement>(null);
+
+  // The button is replaced by the link, so focus moves there instead of being lost.
+  useEffect(() => {
+    if (state === "saved") savedLink.current?.focus();
+  }, [state]);
+
+  async function save() {
+    setState("saving");
+    try {
+      await api.post("/api/saved-briefs", { brief, filters });
+      setState("saved");
+    } catch {
+      setState("failed");
+    }
+  }
+
+  return (
+    <div className={styles.save}>
+      {state === "saved" ? (
+        <Link ref={savedLink} href="/saved-searches" className={styles.saved}>
+          Saved · View saved searches
+        </Link>
+      ) : (
+        <Button
+          variant="secondary"
+          size="sm"
+          loading={state === "saving"}
+          loadingLabel="Saving…"
+          onClick={() => void save()}
+        >
+          Save search
+        </Button>
+      )}
+      <span className="visually-hidden" role="status">
+        {state === "saved" ? "Search saved" : ""}
+      </span>
+      {state === "failed" && (
+        <span className={styles.saveError} role="alert">
+          Couldn&apos;t save the search. Try again.
+        </span>
+      )}
+    </div>
   );
 }
 

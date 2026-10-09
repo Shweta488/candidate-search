@@ -14,23 +14,52 @@ function readEnvLocal(): Record<string, string> {
 }
 
 async function setSearchesUsed(company: string, used: number): Promise<null> {
-  const env = readEnvLocal();
-  const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { error } = await admin.schema("private").from("companies").update({ searches_used: used }).eq("code", company);
+  const { error } = await adminClient()
+    .schema("private")
+    .from("companies")
+    .update({ searches_used: used })
+    .eq("code", company);
   if (error) throw new Error(`Could not set searches for ${company}: ${error.message}`);
   return null;
 }
 
-async function deleteShortlists(company: string): Promise<null> {
+function adminClient() {
   const env = readEnvLocal();
-  const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data } = await admin.schema("private").from("companies").select("id").eq("code", company).single();
-  const { error } = await admin.from("shortlists").delete().eq("company_id", data?.id);
-  if (error) throw new Error(`Could not delete shortlists for ${company}: ${error.message}`);
+}
+
+async function companyId(company: string): Promise<string> {
+  const { data, error } = await adminClient()
+    .schema("private")
+    .from("companies")
+    .select("id")
+    .eq("code", company)
+    .single();
+  if (error) throw new Error(`Could not find ${company}: ${error.message}`);
+  return data.id as string;
+}
+
+// Deletes all of a company's rows in one of its public tables, so a spec starts from none.
+async function deleteCompanyRows(table: "shortlists" | "saved_briefs", company: string): Promise<null> {
+  const { error } = await adminClient()
+    .from(table)
+    .delete()
+    .eq("company_id", await companyId(company));
+  if (error) throw new Error(`Could not delete ${table} for ${company}: ${error.message}`);
+  return null;
+}
+
+async function saveBrief(args: { company: string; brief: string; filters: object }): Promise<null> {
+  const { error } = await adminClient()
+    .from("saved_briefs")
+    .insert({
+      company_id: await companyId(args.company),
+      brief: args.brief,
+      filters: args.filters,
+    });
+  if (error) throw new Error(`Could not save a search for ${args.company}: ${error.message}`);
   return null;
 }
 
@@ -51,7 +80,11 @@ export default defineConfig({
         // Uses up a company's free search, to show the free plan at its limit.
         useFreeSearch: (company: string) => setSearchesUsed(company, 1),
         // Deletes a company's shortlists, so a spec starts from none.
-        deleteShortlists: (company: string) => deleteShortlists(company),
+        deleteShortlists: (company: string) => deleteCompanyRows("shortlists", company),
+        // Deletes a company's saved searches, so a spec starts from none.
+        deleteSavedBriefs: (company: string) => deleteCompanyRows("saved_briefs", company),
+        // Saves a search for a company directly, so a spec can start from one.
+        saveBrief,
       });
     },
   },

@@ -895,6 +895,7 @@ src/
     shortlists.ts               shortlist and member functions
     savedBriefs.ts              saved search functions
     search/
+      brief.ts                  zod Brief schema, shared by search and saved searches
       vocabulary.ts             load and cache get_vocabulary() (3.2)
       filterSchema.ts           zod Filters schema and LLM tool schema from the vocabulary
       prompt.ts                 system prompt and mapping rules
