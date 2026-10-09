@@ -733,7 +733,7 @@ Data loading uses one small hook, `useApiQuery(path)`, returning `{ data, error,
 | Edit, remove or add a filter tag | none (local draft) | "Run search" button appears |
 | Run search with edited filters | `POST /api/search { brief, filters }` | as above |
 | Next / Previous | `GET /api/search/{id}?page=n` | `router.push` with the new page |
-| Open the page with `?id=` | `GET /api/search/{id}?page=n` | show it; `404` shows "This search was not found" |
+| Open the page with `?id=` | `GET /api/search/{id}?page=n` | show it; `404` shows the welcome (6.7) |
 | Save search | `POST /api/saved-briefs { brief, filters }` | "Saved" confirmation |
 | Add to list | `GET /api/shortlists` when the menu opens; `POST /api/shortlists/{id}/people/{personId}` | "Added to …" or "Already on …" (`added: false`) |
 
@@ -788,7 +788,7 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 | `402` | "You've used your free search." + Upgrade. Paging and shortlisting earlier searches still work |
 | `503` | "Search is unavailable right now. Your search wasn't used." + Try again |
 | `500`, network | "Something went wrong." + Try again |
-| `404` on `?id=` | "This search was not found." + New search |
+| No search yet, or `404` on `?id=` (an old or wrong link) | A welcome: "Find the right people by describing them", one line on what happens, three example briefs (clicking one fills the box without searching) and, on the free plan, how many searches are left. No error message |
 
 **Accessibility checklist** (WCAG 2.1 AA)
 

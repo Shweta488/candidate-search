@@ -36,6 +36,10 @@
 }
 
 @media (max-width: 639px) {
+  .loading {
+    width: 72px; /* the width of "Free · 1 left", so the header stays on one line */
+  }
+
   .long {
     display: none;
   }
