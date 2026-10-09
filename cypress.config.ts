@@ -23,6 +23,17 @@ async function setSearchesUsed(company: string, used: number): Promise<null> {
   return null;
 }
 
+async function deleteShortlists(company: string): Promise<null> {
+  const env = readEnvLocal();
+  const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data } = await admin.schema("private").from("companies").select("id").eq("code", company).single();
+  const { error } = await admin.from("shortlists").delete().eq("company_id", data?.id);
+  if (error) throw new Error(`Could not delete shortlists for ${company}: ${error.message}`);
+  return null;
+}
+
 export default defineConfig({
   e2e: {
     baseUrl: process.env.APP_URL ?? "http://localhost:3000",
@@ -39,6 +50,8 @@ export default defineConfig({
         resetSearches: (company: string) => setSearchesUsed(company, 0),
         // Uses up a company's free search, to show the free plan at its limit.
         useFreeSearch: (company: string) => setSearchesUsed(company, 1),
+        // Deletes a company's shortlists, so a spec starts from none.
+        deleteShortlists: (company: string) => deleteShortlists(company),
       });
     },
   },

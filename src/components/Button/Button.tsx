@@ -1,7 +1,8 @@
 import styles from "./Button.module.css";
 
 type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost";
+  ref?: React.Ref<HTMLButtonElement>; // React 19 passes ref as a normal prop
+  variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "md" | "sm";
   // Shown instead of the label while an action runs, for example "Signing in…".
   loadingLabel?: string;

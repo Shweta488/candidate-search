@@ -3,7 +3,11 @@
 import { useId } from "react";
 import styles from "./TextField.module.css";
 
-type Props = React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string };
+type Props = React.InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  error?: string;
+  ref?: React.Ref<HTMLInputElement>; // React 19 passes ref as a normal prop
+};
 
 export function TextField({ label, error, id, className, ...rest }: Props) {
   const generatedId = useId();
@@ -22,7 +26,7 @@ export function TextField({ label, error, id, className, ...rest }: Props) {
         {...rest}
       />
       {error && (
-        <p id={errorId} className={styles.error}>
+        <p id={errorId} className={styles.error} role="alert">
           {error}
         </p>
       )}

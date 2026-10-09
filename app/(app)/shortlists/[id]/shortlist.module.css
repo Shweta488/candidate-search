@@ -1,0 +1,62 @@
+.back {
+  justify-self: start;
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actions,
+.panelActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.grow {
+  flex: 1 1 260px;
+}
+
+.danger {
+  align-items: center;
+  border-color: var(--color-danger-line);
+  background: var(--color-danger-soft);
+}
+
+.question {
+  flex: 1 1 260px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+.members {
+  display: grid;
+  gap: var(--space-3);
+}

@@ -34,7 +34,9 @@ for (const viewport of VIEWPORTS) {
         cy.get("header").contains("1 left").should("be.visible");
       }
 
-      cy.contains("button", "Sign out").click();
+      // On phones, Sign out is in the menu.
+      if (viewport.name === "phone") cy.get("button[aria-label=Menu]").click();
+      cy.contains("button:visible", "Sign out").click();
       cy.location("pathname").should("eq", "/sign-in");
       cy.visit("/search");
       cy.location("pathname").should("eq", "/sign-in");
