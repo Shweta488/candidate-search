@@ -1,4 +1,4 @@
-%% LLD: Stripe webhook handling. One Postgres transaction per event.
+%% LLD: Stripe webhook handling (LLD section 5). One Postgres transaction per event.
 sequenceDiagram
     autonumber
     participant ST as Stripe (simulated)
@@ -9,27 +9,25 @@ sequenceDiagram
     ST->>API: raw body (bytes untouched) + Stripe-Signature
     API->>API: parse t= and v1= from the header<br/>HMAC-SHA256(secret, t + "." + raw body)<br/>timingSafeEqual against each v1
     alt signature missing or wrong
-        API-->>ST: 400
+        API-->>ST: 400 invalid_signature
     else valid
-        alt not customer.subscription.*, or unknown company
-            API-->>ST: 200 (recorded as ignored)
+        API->>API: JSON.parse + zod (id, type, created, plus subscription fields for subscription events)
+        API->>DB: event id, type, created, sub id, status, metadata.company
+        DB->>DB: INSERT INTO stripe_events ON CONFLICT (id) DO NOTHING
+        alt event id already seen (repeat)
+            DB-->>API: duplicate, nothing changes
+        else not a subscription event, or unknown company
+            DB-->>API: ignored
         else subscription event
-            API->>DB: event id, type, created, sub id, status, metadata.company
-            DB->>DB: INSERT INTO stripe_events ON CONFLICT (id) DO NOTHING
-            alt event id already seen (repeat)
-                DB-->>API: duplicate
-                API-->>ST: 200, nothing changes
-            else first time
-                DB->>DB: SELECT subscription FOR UPDATE
-                alt event.created < last_event_created
-                    DB-->>API: stale (older event arrived late), not applied
-                else newer, or same second (tie rule in ARCHITECTURE.md)
-                    DB->>DB: upsert status, last_event_created, last_event_id
-                end
-                API-->>ST: 200
+            DB->>DB: upsert subscription only if (created, event id)<br/>is newer than the stored pair
+            alt older event arrived late
+                DB-->>API: stale, not applied
+            else newer (same second: higher event id wins)
+                DB-->>API: applied
             end
         end
+        API-->>ST: 200 { received, outcome }
     end
 
     Note over PL,DB: plan = 'paid' when any subscription of the company<br/>has status active or trialing, else 'free'.<br/>Computed on read, so it can never drift from the events.
-    PL->>DB: plan + searches_used
+    PL->>DB: get_plan(company)

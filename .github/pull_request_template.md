@@ -1,6 +1,6 @@
-## Milestone
+## Story
 
-<!-- e.g. M2 Data layer. Link the section in docs/IMPLEMENTATION_PLAN.md -->
+<!-- e.g. S2 Search by brief. Link the section in docs/IMPLEMENTATION_PLAN.md -->
 
 ## What changed and why
 

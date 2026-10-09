@@ -32,14 +32,15 @@ Source: [`02-data-model.mmd`](diagrams/02-data-model.mmd)
 
 ```mermaid
 %% LLD: data model, based on the real shape of candidates.json.
-%% public schema: reachable through PostgREST, RLS on every table.
-%% private schema: not exposed, only the Next.js server (secret key) touches it.
+%% public schema (recruiter's own token, RLS): recruiters, shortlists, shortlist_members, saved_briefs.
+%% private schema (server only, secret key): companies, candidates, experiences, educations,
+%% searches, search_results, subscriptions, stripe_events. See LLD section 2.
 erDiagram
     companies ||--o{ recruiters : employs
     companies ||--o{ shortlists : owns
     companies ||--o{ saved_briefs : owns
     companies ||--o{ searches : runs
-    companies ||--o{ subscriptions : "billed by (private)"
+    companies ||--o{ subscriptions : "billed by"
     shortlists ||--o{ shortlist_members : contains
     candidates ||--o{ shortlist_members : "listed in"
     searches ||--o{ search_results : "ranked rows"
@@ -49,7 +50,7 @@ erDiagram
 
     companies {
         uuid id PK
-        text slug UK "acme or globex"
+        text code UK "acme or globex"
         text name
         int searches_used "free plan counter"
     }
@@ -101,7 +102,7 @@ erDiagram
     }
     shortlists {
         uuid id PK
-        uuid company_id FK "defaults to caller's company"
+        uuid company_id FK "set by the server, checked by RLS"
         text name
         timestamptz created_at
     }
@@ -176,7 +177,7 @@ sequenceDiagram
         Q-->>API: searches_remaining
         API->>L: system rules + brief inside tags, forced tool call,<br/>tool schema whose values are enums from our data
         L-->>API: { filters, unsupported[] }
-        API->>V: parse, drop anything not in the vocabulary, clamp years
+        API->>V: parse, values not in the vocabulary move to unsupported
         alt LLM error or timeout (2.5s)
             API->>Q: give the search credit back
             API-->>UI: 503 "Search is unavailable, try again"
@@ -198,15 +199,15 @@ Source: [`04-request-map.mmd`](diagrams/04-request-map.mmd)
 
 ```mermaid
 %% LLD: every API request, how it is authorised, and what it touches.
-%% user client = publishable key + caller's token, every query runs under RLS
-%% server client = secret key, only used for the paths marked (server)
+%% recruiter client = publishable key + caller's token, every query runs under RLS
+%% server client = secret key, used for the paths marked (server). See LLD section 4.
 flowchart LR
     C(["Client<br/>(browser or grader script)"])
 
     subgraph Gate["Gate for every recruiter route"]
         G1["Authorization: Bearer token"]
         G2["supabase.auth.getUser(token)<br/>401 if missing or invalid"]
-        G3["load recruiter row<br/>company_id from the database, never from the request"]
+        G3["load recruiter row (server client)<br/>company_id from the database, never from the request"]
         G1 --> G2 --> G3
     end
 
@@ -240,14 +241,15 @@ flowchart LR
     C --> W1
     G3 --> S1 & S2 & S3 & P1 & L1 & L2 & L3 & B1 & B2 & PL
 
-    S1 -- "(server) spend_search_credit, LLM, run_search" --> T1[("companies, searches,<br/>search_results, candidates")]
-    S2 -- "user client: 20 rows by (search_id, rank)<br/>never touches the quota" --> T1
+    S1 -- "(server) spend_search_credit, LLM, run_search" --> T1[("private: companies, searches,<br/>search_results, candidates")]
+    S2 -- "(server) get_search_page: 20 rows by (search_id, rank)<br/>scoped to my company, never touches the quota" --> T1
     S3 -- "(server) distinct values, cached in memory" --> T2
-    P1 -- "(server) read one candidate" --> T2[("candidates, experiences, educations")]
-    L1 & L2 & L3 -- "user client, RLS: my company only" --> T3[("shortlists, shortlist_members")]
-    B1 & B2 -- "user client, RLS: my company only" --> T4[("saved_briefs")]
-    PL -- "(server) plan + counter for my company" --> T5[("companies, private.subscriptions")]
-    W2 -- "(server) private.apply_stripe_event" --> T6[("private.stripe_events,<br/>private.subscriptions")]
+    P1 -- "(server) read one candidate" --> T2[("private: candidates, experiences, educations")]
+    P1 -- "recruiter client: my shortlist_ids" --> T3
+    L1 & L2 & L3 -- "recruiter client, RLS: my company only" --> T3[("public: shortlists, shortlist_members")]
+    B1 & B2 -- "recruiter client, RLS: my company only" --> T4[("public: saved_briefs")]
+    PL -- "(server) get_plan for my company" --> T5[("private: companies, subscriptions")]
+    W2 -- "(server) apply_stripe_event" --> T6[("private: stripe_events,<br/>subscriptions")]
 ```
 
 ## 05. Stripe webhook (deep dive 6.5)
@@ -255,7 +257,7 @@ flowchart LR
 Source: [`05-billing-webhook.mmd`](diagrams/05-billing-webhook.mmd)
 
 ```mermaid
-%% LLD: Stripe webhook handling. One Postgres transaction per event.
+%% LLD: Stripe webhook handling (LLD section 5). One Postgres transaction per event.
 sequenceDiagram
     autonumber
     participant ST as Stripe (simulated)
@@ -266,30 +268,28 @@ sequenceDiagram
     ST->>API: raw body (bytes untouched) + Stripe-Signature
     API->>API: parse t= and v1= from the header<br/>HMAC-SHA256(secret, t + "." + raw body)<br/>timingSafeEqual against each v1
     alt signature missing or wrong
-        API-->>ST: 400
+        API-->>ST: 400 invalid_signature
     else valid
-        alt not customer.subscription.*, or unknown company
-            API-->>ST: 200 (recorded as ignored)
+        API->>API: JSON.parse + zod (id, type, created, plus subscription fields for subscription events)
+        API->>DB: event id, type, created, sub id, status, metadata.company
+        DB->>DB: INSERT INTO stripe_events ON CONFLICT (id) DO NOTHING
+        alt event id already seen (repeat)
+            DB-->>API: duplicate, nothing changes
+        else not a subscription event, or unknown company
+            DB-->>API: ignored
         else subscription event
-            API->>DB: event id, type, created, sub id, status, metadata.company
-            DB->>DB: INSERT INTO stripe_events ON CONFLICT (id) DO NOTHING
-            alt event id already seen (repeat)
-                DB-->>API: duplicate
-                API-->>ST: 200, nothing changes
-            else first time
-                DB->>DB: SELECT subscription FOR UPDATE
-                alt event.created < last_event_created
-                    DB-->>API: stale (older event arrived late), not applied
-                else newer, or same second (tie rule in ARCHITECTURE.md)
-                    DB->>DB: upsert status, last_event_created, last_event_id
-                end
-                API-->>ST: 200
+            DB->>DB: upsert subscription only if (created, event id)<br/>is newer than the stored pair
+            alt older event arrived late
+                DB-->>API: stale, not applied
+            else newer (same second: higher event id wins)
+                DB-->>API: applied
             end
         end
+        API-->>ST: 200 { received, outcome }
     end
 
     Note over PL,DB: plan = 'paid' when any subscription of the company<br/>has status active or trialing, else 'free'.<br/>Computed on read, so it can never drift from the events.
-    PL->>DB: plan + searches_used
+    PL->>DB: get_plan(company)
 ```
 
 ## 06. Tenant isolation (deep dive 6.4)
@@ -297,22 +297,22 @@ sequenceDiagram
 Source: [`06-tenancy.mmd`](diagrams/06-tenancy.mmd)
 
 ```mermaid
-%% LLD: how tenant isolation holds on both paths (our API and direct Supabase).
+%% LLD: how tenant isolation holds on both paths (our API and direct Supabase). See LLD 2.4.
 flowchart TB
     A["Acme recruiter token<br/>(JWT, sub = acme user id)"]
 
     A --> API["Our API route"]
     A --> PR["Direct PostgREST call<br/>/rest/v1/shortlists?..."]
 
-    API --> UC["User client<br/>same JWT forwarded"]
-    UC --> PG
+    API --> RC["Recruiter client<br/>same JWT forwarded"]
+    RC --> PG
     PR --> PG
 
     subgraph PG["Postgres, role = authenticated"]
-        F["public.my_company_id()<br/>SECURITY DEFINER, looks up recruiters by auth.uid()"]
-        POL["Row level security on shortlists, shortlist_members,<br/>saved_briefs, searches, search_results<br/>read rule (USING): only rows where company_id = my company<br/>write rule (WITH CHECK): new or changed rows must have my company"]
-        COL["company_id DEFAULT my_company_id(),<br/>no UPDATE grant on company_id"]
-        REV["No grants to anon/authenticated on:<br/>candidates tables, companies counter,<br/>private schema (functions + billing tables)"]
+        F["my company = company_id from public.recruiters<br/>where user_id = auth.uid()"]
+        POL["Row level security on shortlists, shortlist_members, saved_briefs<br/>read rule (USING): only rows of my company<br/>write rule (WITH CHECK): new or changed rows must be my company"]
+        COL["company_id set by the server from the recruiter lookup,<br/>only UPDATE (name) granted on shortlists"]
+        REV["private schema: no USAGE for anon or authenticated<br/>(candidates, companies, searches, billing, all functions)"]
         F --> POL
     end
 

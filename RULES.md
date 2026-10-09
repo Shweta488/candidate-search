@@ -8,7 +8,7 @@ These rules apply to everyone who changes this repo, human or AI assistant. `CLA
 2. Nothing is pushed without a **second, separate** approval ("approved to push"). Approval to commit is never approval to push.
 3. Before asking for approval, show: what changed, why, how it was checked, and the proposed commit message.
 4. One logical change per commit. Follow the plan in [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md); if the plan changes, update it in the same commit.
-5. One branch and one pull request per milestone, branched from the latest `main`. Never commit directly to `main`. Pull requests are merged by Shweta with a merge commit or rebase, never squash.
+5. One branch and one pull request per story (see the plan), each started only after its story plan is reviewed, branched from the latest `main`. Never commit directly to `main`. Pull requests are merged by Shweta with a merge commit or rebase, never squash.
 6. Never rewrite pushed history (`push --force`, rebase of pushed commits) without explicit approval.
 7. Prefer plain code over clever code, and explain non-obvious code in the review summary and pull request description.
 
@@ -29,13 +29,14 @@ Types: `feat`, `fix`, `test`, `docs`, `chore`, `refactor`, `perf`, `style`. Scop
 - **UI** (`app/(app)`, `src/components`, `src/client`) never imports from `src/server`.
 - **API** (`app/api/**/route.ts`) stays thin: auth gate, zod parse, call one service, map errors to HTTP.
 - **Services** (`src/server`) start with `import 'server-only'` and hold all business logic.
+- **Shared types** (`src/shared`) hold TypeScript types only (no code, no secrets) and may be imported by any layer.
 - **Data** (`supabase/migrations`, `scripts/seed.ts`) owns schema, RLS, grants and SQL functions. Schema changes only via a new migration file, never by editing an applied one after it is pushed.
 
 ## 4. Security rules (non-negotiable)
 
 - The secret Supabase key and the model key are read only in `src/server`. Never prefix them with `NEXT_PUBLIC_`.
 - `company_id` always comes from the database lookup of the signed-in user, never from a request body, query or header.
-- Every table with company data has RLS enabled with both a read rule (`USING`) and a write rule (`WITH CHECK`), and a test that tries to cross companies.
+- Every table in `public` has RLS enabled with both a read rule (`USING`) and a write rule (`WITH CHECK`), and a test that tries to cross companies. Every table in `private` has RLS enabled with no policies, so only the server's secret key can use it.
 - Every function in the `private` schema has `EXECUTE` revoked from `PUBLIC`, `anon` and `authenticated`.
 - No SQL built by string concatenation. Filters reach SQL only as typed parameters.
 - The LLM receives the brief only. Never send candidate data to the model.

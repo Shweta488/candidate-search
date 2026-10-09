@@ -22,7 +22,7 @@ sequenceDiagram
         Q-->>API: searches_remaining
         API->>L: system rules + brief inside tags, forced tool call,<br/>tool schema whose values are enums from our data
         L-->>API: { filters, unsupported[] }
-        API->>V: parse, drop anything not in the vocabulary, clamp years
+        API->>V: parse, values not in the vocabulary move to unsupported
         alt LLM error or timeout (2.5s)
             API->>Q: give the search credit back
             API-->>UI: 503 "Search is unavailable, try again"
