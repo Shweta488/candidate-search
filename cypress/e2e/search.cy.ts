@@ -1,4 +1,5 @@
-// A real search, brief to results, through the LLM (about 4 Claude calls per run).
+// A real search, brief to results, through the LLM (about 4 Claude calls per run), then a
+// correction that removes a filter and runs again.
 // UI states with faked responses are in search-states.cy.ts.
 import { checkAccessibility, signIn, VIEWPORTS } from "../support/helpers";
 
@@ -32,6 +33,13 @@ for (const viewport of VIEWPORTS) {
       cy.contains("a", "Next ›").click();
       cy.contains("Page 2 of 2").should("be.visible");
       cy.get("article").should("have.length", 1);
+
+      // Correct it: drop the city and run again. Edited filters skip the LLM.
+      cy.task("resetSearches", "acme");
+      cy.get("button[aria-label='Remove City: New York']").click();
+      cy.contains("button", "Run search").click();
+      cy.contains("h2", "95 candidates").should("be.visible");
+      cy.contains("li", "City: New York").should("not.exist");
     });
 
     it("shows what it couldn't filter on instead of the wrong people", () => {

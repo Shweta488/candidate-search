@@ -783,7 +783,7 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 |---|---|
 | Searching | 3 skeleton cards; button reads "Searching…" |
 | No matches | "No candidates match all of these filters. Try removing a filter." |
-| Unsupported ask | "Couldn't filter on: {items}. We're showing nobody rather than the wrong people." Understood filters stay visible |
+| Unsupported ask | "Couldn't filter on: {items}. We're showing nobody rather than the wrong people." Understood filters stay visible, with **Search without these** to run only them (a new search) |
 | No filters understood | "We couldn't find any requirement in that brief. Try a role, skill, location or seniority." |
 | `402` | "You've used your free search." + Upgrade. Paging and shortlisting earlier searches still work |
 | `503` | "Search is unavailable right now. Your search wasn't used." + Try again |

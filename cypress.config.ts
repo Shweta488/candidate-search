@@ -13,6 +13,16 @@ function readEnvLocal(): Record<string, string> {
   return values;
 }
 
+async function setSearchesUsed(company: string, used: number): Promise<null> {
+  const env = readEnvLocal();
+  const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await admin.schema("private").from("companies").update({ searches_used: used }).eq("code", company);
+  if (error) throw new Error(`Could not set searches for ${company}: ${error.message}`);
+  return null;
+}
+
 export default defineConfig({
   e2e: {
     baseUrl: process.env.APP_URL ?? "http://localhost:3000",
@@ -23,19 +33,9 @@ export default defineConfig({
     setupNodeEvents(on) {
       on("task", {
         // Gives a company its free search back, so a spec can run a real search.
-        async resetSearches(company: string) {
-          const env = readEnvLocal();
-          const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
-            auth: { persistSession: false, autoRefreshToken: false },
-          });
-          const { error } = await admin
-            .schema("private")
-            .from("companies")
-            .update({ searches_used: 0 })
-            .eq("code", company);
-          if (error) throw new Error(`Could not reset searches for ${company}: ${error.message}`);
-          return null;
-        },
+        resetSearches: (company: string) => setSearchesUsed(company, 0),
+        // Uses up a company's free search, to show the free plan at its limit.
+        useFreeSearch: (company: string) => setSearchesUsed(company, 1),
       });
     },
   },
