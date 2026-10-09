@@ -811,9 +811,9 @@ Docker Desktop running, Node 24 (pinned in `.nvmrc` and `package.json` `engines`
 
 | Target | Steps |
 |---|---|
-| `make setup` | 1. Check Node major version is 24 and `docker info` succeeds; otherwise stop with a message saying what to fix. 2. `npm ci`. 3. `npx supabase start`. 4. `npx supabase db reset` (applies every migration to an empty database). 5. `node scripts/seed.ts`. 6. `node scripts/write-env.ts`. |
+| `make setup` | 1. Check Node major version is 24 and `docker info` succeeds; otherwise stop with a message saying what to fix. 2. `npm ci`. 3. `npx supabase stop --no-backup` (discards any old local database). 4. `npx supabase start` (creates the database and applies every migration). 5. `node scripts/seed.ts`. 6. `node scripts/write-env.ts`. |
 | `make dev` | Stop with a message if `ANTHROPIC_API_KEY` or `STRIPE_WEBHOOK_SECRET` is not set, or if `.env.local` is missing; then `next dev` on port 3000. |
-| `make reset` | Steps 4 and 5 of `make setup`: back to the seed state. |
+| `make reset` | `npx supabase db reset` (re-applies every migration to an empty database) and the seed: back to the seed state without restarting Docker. |
 | `make stop` | `npx supabase stop`. |
 | `make check` | Step 1 on its own; also run before `make reset`. |
 

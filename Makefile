@@ -3,10 +3,13 @@
 
 NODE_MAJOR := $(shell node -p "process.versions.node.split('.')[0]" 2>/dev/null)
 
+# setup always builds a fresh local database from the migrations, so an old local
+# database from an earlier version of the schema can't get in the way.
 setup: check
 	npm ci
+	npx supabase stop --no-backup
 	npx supabase start
-	npx supabase db reset
+	node scripts/seed.ts
 	node scripts/write-env.ts
 
 dev:
@@ -17,6 +20,7 @@ dev:
 
 reset: check
 	npx supabase db reset
+	node scripts/seed.ts
 
 stop:
 	npx supabase stop
