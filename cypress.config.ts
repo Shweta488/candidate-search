@@ -29,6 +29,9 @@ export default defineConfig({
     specPattern: "cypress/e2e/**/*.cy.ts",
     supportFile: "cypress/support/e2e.ts",
     video: false,
+    // make dev compiles a page on its first visit and shares the machine with the test
+    // browser, so allow up to 10 s (Cypress's default is 4 s) before an element counts as missing.
+    defaultCommandTimeout: 10_000,
     screenshotOnRunFailure: true,
     setupNodeEvents(on) {
       on("task", {
