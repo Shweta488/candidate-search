@@ -8,10 +8,10 @@ import { Button } from "@/components/Button/Button";
 import { PlanPill } from "@/components/PlanPill/PlanPill";
 import styles from "./AppHeader.module.css";
 
-// Links are added as their stories land (Saved searches in S6).
 const NAV = [
   { href: "/search", label: "Search" },
   { href: "/shortlists", label: "Shortlists" },
+  { href: "/saved-searches", label: "Saved searches" },
 ];
 
 // On phones the links and Sign out move into a menu; the plan pill stays visible.
