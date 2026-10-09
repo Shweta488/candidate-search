@@ -21,7 +21,22 @@
 }
 
 .avatar {
-  grid-row: span 3;
+  grid-row: span 4;
+  align-self: start;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.onLists {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 .line {

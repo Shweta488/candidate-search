@@ -42,6 +42,10 @@ export function json(data: unknown, status = 200): Response {
   return Response.json(data, { status });
 }
 
+export function noContent(): Response {
+  return new Response(null, { status: 204 });
+}
+
 const MAX_BODY_BYTES = 16 * 1024; // LLD 1.1
 
 // Reads a JSON body: rejects bodies over 16 KB and anything that isn't JSON, then

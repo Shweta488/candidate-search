@@ -7,6 +7,7 @@ import { api, toApiError, type ApiError } from "@/client/api";
 import { usePlan } from "@/client/plan";
 import { sameFilters } from "@/client/filterDraft";
 import { useApiQuery } from "@/client/useApiQuery";
+import { AddToList } from "@/components/AddToList/AddToList";
 import { BriefForm } from "@/components/BriefForm/BriefForm";
 import { Button } from "@/components/Button/Button";
 import { CandidateCard, CandidateCardSkeleton } from "@/components/CandidateCard/CandidateCard";
@@ -288,6 +289,7 @@ function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSe
               candidate={candidate}
               matchedSkills={matchedSkills}
               href={candidateHref(candidate.id, page)}
+              action={<AddToList candidateId={candidate.id} candidateName={candidate.full_name} />}
             />
           ))}
         </div>

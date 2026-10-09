@@ -86,3 +86,73 @@
     padding-inline: var(--space-4);
   }
 }
+
+/* Phone menu: below 640 px the links and Sign out move into it. */
+.narrow {
+  display: none;
+}
+
+.menuButton {
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.bars,
+.bars::before,
+.bars::after {
+  display: block;
+  position: relative;
+  width: 18px;
+  height: 2px;
+  background: var(--color-text);
+  content: "";
+}
+
+.bars::before {
+  position: absolute;
+  top: -6px;
+}
+
+.bars::after {
+  position: absolute;
+  top: 6px;
+}
+
+.menu {
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.menuNav {
+  display: grid;
+}
+
+.menuNav .link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-md);
+}
+
+@media (max-width: 639px) {
+  /* Two classes, so this wins over the Button's own display rule. */
+  .inner .wide {
+    display: none;
+  }
+
+  .narrow.menuButton {
+    display: grid;
+  }
+
+  .narrow.menu {
+    display: flex;
+  }
+}

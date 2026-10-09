@@ -15,3 +15,12 @@ export function yearRange(start: number, end: number | null): string {
   if (end === null) return `${start} to present`;
   return start === end ? String(start) : `${start} to ${end}`;
 }
+
+// "Oct 9, 2026", for when a list was created.
+export function shortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+export function peopleText(count: number): string {
+  return `${count} ${count === 1 ? "person" : "people"}`;
+}

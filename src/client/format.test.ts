@@ -1,4 +1,4 @@
-import { seniorityLabel, yearRange, yearsText } from "./format";
+import { peopleText, seniorityLabel, shortDate, yearRange, yearsText } from "./format";
 
 describe("format", () => {
   it("labels seniority", () => {
@@ -9,6 +9,12 @@ describe("format", () => {
   it("says year or years", () => {
     expect(yearsText(1)).toBe("1 year");
     expect(yearsText(0)).toBe("0 years");
+  });
+
+  it("writes dates and counts", () => {
+    expect(shortDate("2026-10-09T12:00:00Z")).toBe("Oct 9, 2026");
+    expect(peopleText(1)).toBe("1 person");
+    expect(peopleText(3)).toBe("3 people");
   });
 
   it("writes a job's years", () => {

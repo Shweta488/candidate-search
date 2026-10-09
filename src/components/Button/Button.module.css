@@ -47,6 +47,15 @@
   background: var(--color-bg-page);
 }
 
+.danger {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--color-danger-hover);
+}
+
 .ghost {
   background: transparent;
   color: var(--color-text-muted);

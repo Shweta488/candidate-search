@@ -6,13 +6,14 @@ import { Suspense, useEffect } from "react";
 import { seniorityLabel, yearRange, yearsText } from "@/client/format";
 import { safeNextPath } from "@/client/redirect";
 import { useApiQuery } from "@/client/useApiQuery";
+import { AddToList } from "@/components/AddToList/AddToList";
 import { Avatar } from "@/components/Avatar/Avatar";
 import { Button } from "@/components/Button/Button";
 import { CandidateCardSkeleton } from "@/components/CandidateCard/CandidateCard";
 import { OpenToWork } from "@/components/OpenToWork/OpenToWork";
 import { PageHeading } from "@/components/PageHeading/PageHeading";
 import { StatePanel } from "@/components/StatePanel/StatePanel";
-import type { Candidate } from "@/shared/types";
+import type { Candidate, ShortlistSummary } from "@/shared/types";
 import styles from "./person.module.css";
 
 // The candidate page (LLD 1.4, 6.1). Opened from a result card, "Back to results" returns
@@ -24,6 +25,12 @@ export function PersonView() {
       <Person />
     </Suspense>
   );
+}
+
+function backLabel(back: string): string {
+  if (back.startsWith("/search?")) return "Back to results";
+  if (back.startsWith("/shortlists/")) return "Back to list";
+  return "Back to search";
 }
 
 function Person() {
@@ -39,10 +46,10 @@ function Person() {
   return (
     <div className={styles.person}>
       <Link href={back} className={styles.back}>
-        ‹ {back.startsWith("/search?") ? "Back to results" : "Back to search"}
+        ‹ {backLabel(back)}
       </Link>
       {data ? (
-        <Profile candidate={data} />
+        <Profile candidate={data} onListsChanged={reload} />
       ) : error?.status === 404 ? (
         <>
           <PageHeading>Candidate</PageHeading>
@@ -74,12 +81,15 @@ function Person() {
   );
 }
 
-function Profile({ candidate: c }: { candidate: Candidate }) {
+function Profile({ candidate: c, onListsChanged }: { candidate: Candidate; onListsChanged: () => void }) {
   return (
     <>
       <div className={styles.head}>
         <Avatar src={c.avatar_url} name={c.full_name} size="lg" className={styles.avatar} />
-        <PageHeading>{c.full_name}</PageHeading>
+        <div className={styles.titleRow}>
+          <PageHeading>{c.full_name}</PageHeading>
+          <AddToList candidateId={c.id} candidateName={c.full_name} onAdded={onListsChanged} />
+        </div>
         <p className={styles.line}>
           {c.current_title} · {c.current_company}
         </p>
@@ -87,6 +97,7 @@ function Profile({ candidate: c }: { candidate: Candidate }) {
           {c.city}, {c.state} · {seniorityLabel(c.seniority)} · {yearsText(c.years_experience)}{" "}
           {c.open_to_work && <OpenToWork />}
         </p>
+        <OnYourLists ids={c.shortlist_ids} />
       </div>
 
       <section className={styles.section} aria-labelledby="skills-heading">
@@ -128,5 +139,26 @@ function Profile({ candidate: c }: { candidate: Candidate }) {
         </ul>
       </section>
     </>
+  );
+}
+
+// The recruiter's lists this candidate is on, as links. Nothing when they're on none.
+function OnYourLists({ ids }: { ids: string[] }) {
+  // The API ignores `for`; it changes the path when the candidate's lists change (for
+  // example a list just created from Add to list), so the names are read again.
+  const path = `/api/shortlists?for=${encodeURIComponent(ids.join(","))}`;
+  const { data } = useApiQuery<{ shortlists: ShortlistSummary[] }>(ids.length > 0 ? path : null);
+  const lists = (data?.shortlists ?? []).filter((list) => ids.includes(list.id));
+  if (ids.length === 0 || lists.length === 0) return null;
+  return (
+    <p className={styles.onLists}>
+      On your lists:{" "}
+      {lists.map((list, index) => (
+        <span key={list.id}>
+          {index > 0 && ", "}
+          <Link href={`/shortlists/${list.id}`}>{list.name}</Link>
+        </span>
+      ))}
+    </p>
   );
 }

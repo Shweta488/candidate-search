@@ -5,16 +5,18 @@ import { Avatar } from "../Avatar/Avatar";
 import { OpenToWork } from "../OpenToWork/OpenToWork";
 import styles from "./CandidateCard.module.css";
 
-// One search result. The name opens the candidate page; skills the search asked for are
-// highlighted.
+// One search result or list member. The name opens the candidate page; skills the
+// search asked for are highlighted; `action` is a button such as Add to list or Remove.
 export function CandidateCard({
   candidate,
-  matchedSkills,
+  matchedSkills = [],
   href,
+  action,
 }: {
   candidate: CandidateSummary;
-  matchedSkills: string[];
+  matchedSkills?: string[];
   href: string;
+  action?: React.ReactNode;
 }) {
   const c = candidate;
   return (
@@ -43,6 +45,7 @@ export function CandidateCard({
           );
         })}
       </ul>
+      {action && <div className={styles.action}>{action}</div>}
     </article>
   );
 }

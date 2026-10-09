@@ -1,0 +1,80 @@
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.create {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.nameField {
+  flex: 1 1 260px;
+}
+
+/* Lines the button up with the text box, below its label. */
+.create > button {
+  margin-top: 27px;
+}
+
+.status {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-success);
+  font-size: var(--text-sm);
+}
+
+.status:empty {
+  display: none;
+}
+
+.lists {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-card);
+}
+
+.name {
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.name:hover {
+  text-decoration: underline;
+}
+
+.meta,
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 639px) {
+  .create > button {
+    width: 100%;
+    margin-top: 0;
+  }
+}
