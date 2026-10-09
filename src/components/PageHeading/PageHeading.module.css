@@ -1,0 +1,12 @@
+.heading {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+/* Focus is moved here for screen readers; the heading is not something to click. */
+.heading:focus {
+  outline: none;
+}

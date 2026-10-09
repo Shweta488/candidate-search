@@ -1,0 +1,5 @@
+.note {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--color-text-muted);
+}

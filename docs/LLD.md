@@ -686,7 +686,7 @@ How the browser side is built, and the visual rules every screen follows (6.7).
 | `/shortlists/{id}` | `app/(app)/shortlists/[id]/page.tsx` | |
 | `/saved-searches` | `app/(app)/saved-searches/page.tsx` | |
 
-Pages are client components (`'use client'`). `app/layout.tsx` (root: fonts, `globals.css`) and the route-group folders are the only server components, and they hold no data.
+Each `page.tsx` is a small server file that sets the page title (`metadata`, with the root template `%s · Candidate Search`) and renders the page's client component, for example `SearchView.tsx` (`'use client'`). Server files hold no data; everything that needs the recruiter's token runs in the browser.
 
 `app/(app)/layout.tsx` wraps every signed-in page: it provides `PlanProvider`, renders the header (navigation, plan pill), and guards the pages (6.2).
 
