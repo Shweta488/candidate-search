@@ -3,6 +3,8 @@ node_modules/
 .next/
 out/
 coverage/
+next-env.d.ts
+*.tsbuildinfo
 
 # local environment and secrets
 .env
