@@ -686,7 +686,7 @@ How the browser side is built, and the visual rules every screen follows (6.7).
 | `/shortlists/{id}` | `app/(app)/shortlists/[id]/page.tsx` | |
 | `/saved-searches` | `app/(app)/saved-searches/page.tsx` | |
 
-Pages are client components (`'use client'`). `app/layout.tsx` (root: fonts, `globals.css`) and the route-group folders are the only server components, and they hold no data.
+Each `page.tsx` is a small server file that sets the page title (`metadata`, with the root template `%s · Candidate Search`) and renders the page's client component, for example `SearchView.tsx` (`'use client'`). Server files hold no data; everything that needs the recruiter's token runs in the browser.
 
 `app/(app)/layout.tsx` wraps every signed-in page: it provides `PlanProvider`, renders the header (navigation, plan pill), and guards the pages (6.2).
 
@@ -811,9 +811,9 @@ Docker Desktop running, Node 24 (pinned in `.nvmrc` and `package.json` `engines`
 
 | Target | Steps |
 |---|---|
-| `make setup` | 1. Check Node major version is 24 and `docker info` succeeds; otherwise stop with a message saying what to fix. 2. `npm ci`. 3. `npx supabase start`. 4. `npx supabase db reset` (applies every migration to an empty database). 5. `node scripts/seed.ts`. 6. `node scripts/write-env.ts`. |
+| `make setup` | 1. Check Node major version is 24 and `docker info` succeeds; otherwise stop with a message saying what to fix. 2. `npm ci`. 3. `npx supabase stop --no-backup` (discards any old local database). 4. `npx supabase start` (creates the database and applies every migration). 5. `node scripts/seed.ts`. 6. `node scripts/write-env.ts`. |
 | `make dev` | Stop with a message if `ANTHROPIC_API_KEY` or `STRIPE_WEBHOOK_SECRET` is not set, or if `.env.local` is missing; then `next dev` on port 3000. |
-| `make reset` | Steps 4 and 5 of `make setup`: back to the seed state. |
+| `make reset` | `npx supabase db reset` (re-applies every migration to an empty database) and the seed: back to the seed state without restarting Docker. |
 | `make stop` | `npx supabase stop`. |
 | `make check` | Step 1 on its own; also run before `make reset`. |
 
@@ -824,7 +824,7 @@ Running `make setup` again is safe; it also resets the database to the seed stat
 `supabase/config.toml`, created by `supabase init` and then changed:
 
 - `[api] schemas = ["public", "private"]` (2.1).
-- `[auth] enable_signup = false` and `[auth.email] enable_signup = false`: recruiters exist only because the seed creates them.
+- `[auth] enable_signup = false`: recruiters exist only because the seed creates them. `[auth.email] enable_signup` stays `true`, because that switch also turns email sign-in on.
 - `[db.seed] enabled = false`: `scripts/seed.ts` seeds instead (7.4).
 - Studio, Storage, Realtime, Edge Functions, analytics and the local email server are turned off. The app uses only Postgres, Auth and the REST API, so `make setup` downloads less and starts faster.
 - `project_id = "candidate-search"`; ports stay at the CLI defaults (API 54321, database 54322).

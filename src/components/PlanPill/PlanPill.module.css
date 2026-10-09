@@ -1,0 +1,46 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.free {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.empty {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.paid {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.loading {
+  width: 130px;
+  background: var(--color-border);
+}
+
+.short {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .long {
+    display: none;
+  }
+
+  .short {
+    display: inline;
+  }
+}
