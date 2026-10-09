@@ -283,7 +283,12 @@ function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSe
       {page.results.length > 0 ? (
         <div className={styles.cards}>
           {page.results.map((candidate) => (
-            <CandidateCard key={candidate.id} candidate={candidate} matchedSkills={matchedSkills} />
+            <CandidateCard
+              key={candidate.id}
+              candidate={candidate}
+              matchedSkills={matchedSkills}
+              href={candidateHref(candidate.id, page)}
+            />
           ))}
         </div>
       ) : (
@@ -294,6 +299,12 @@ function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSe
       <Pager searchId={page.search_id} page={page.page} totalPages={page.total_pages} />
     </>
   );
+}
+
+// The candidate page, remembering this search and page so "Back to results" returns here.
+function candidateHref(candidateId: string, page: SearchPage): string {
+  const results = `/search?id=${encodeURIComponent(page.search_id)}&page=${page.page}`;
+  return `/people/${encodeURIComponent(candidateId)}?back=${encodeURIComponent(results)}`;
 }
 
 // A new search failed (LLD 6.6, 6.7).

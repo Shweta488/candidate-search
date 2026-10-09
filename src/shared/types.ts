@@ -80,3 +80,23 @@ export type SearchPage = {
 
 // POST /api/search: page 1 of the new search, plus the searches left (null on the paid plan).
 export type SearchResponse = SearchPage & { searches_remaining: number | null };
+
+export type Experience = {
+  title: string;
+  company: string;
+  company_logo_url: string;
+  company_type: string;
+  start_year: number;
+  end_year: number | null; // null: current job
+  description: string;
+};
+
+export type Education = { school: string; degree: string; field: string; graduation_year: number };
+
+// The candidate page (LLD 1.2). Experiences are newest first.
+export type Candidate = CandidateSummary & {
+  role: string;
+  country: string;
+  experiences: Experience[];
+  education: Education[];
+};
