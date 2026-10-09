@@ -805,16 +805,17 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 
 ### 7.1 Prerequisites
 
-Docker Desktop running, Node 24 (pinned in `.nvmrc` and `package.json` `engines`), and two values exported in the shell before `make dev`: `ANTHROPIC_API_KEY` and `STRIPE_WEBHOOK_SECRET`.
+Docker Desktop running with about 5 GB of free disk, Node 24 (pinned in `.nvmrc` and `package.json` `engines`), and two values exported in the shell before `make dev`: `ANTHROPIC_API_KEY` and `STRIPE_WEBHOOK_SECRET`.
 
 ### 7.2 Makefile targets
 
 | Target | Steps |
 |---|---|
 | `make setup` | 1. Check Node major version is 24 and `docker info` succeeds; otherwise stop with a message saying what to fix. 2. `npm ci`. 3. `npx supabase start`. 4. `npx supabase db reset` (applies every migration to an empty database). 5. `node scripts/seed.ts`. 6. `node scripts/write-env.ts`. |
-| `make dev` | Stop with a message if `ANTHROPIC_API_KEY` or `STRIPE_WEBHOOK_SECRET` is not set; then `next dev` on port 3000. |
+| `make dev` | Stop with a message if `ANTHROPIC_API_KEY` or `STRIPE_WEBHOOK_SECRET` is not set, or if `.env.local` is missing; then `next dev` on port 3000. |
 | `make reset` | Steps 4 and 5 of `make setup`: back to the seed state. |
 | `make stop` | `npx supabase stop`. |
+| `make check` | Step 1 on its own; also run before `make reset`. |
 
 Running `make setup` again is safe; it also resets the database to the seed state.
 
@@ -823,8 +824,10 @@ Running `make setup` again is safe; it also resets the database to the seed stat
 `supabase/config.toml`, created by `supabase init` and then changed:
 
 - `[api] schemas = ["public", "private"]` (2.1).
-- `[auth] enable_signup = false`: recruiters exist only because the seed creates them.
-- Everything else stays at the CLI defaults (API on port 54321, database on 54322).
+- `[auth] enable_signup = false` and `[auth.email] enable_signup = false`: recruiters exist only because the seed creates them.
+- `[db.seed] enabled = false`: `scripts/seed.ts` seeds instead (7.4).
+- Studio, Storage, Realtime, Edge Functions, analytics and the local email server are turned off. The app uses only Postgres, Auth and the REST API, so `make setup` downloads less and starts faster.
+- `project_id = "candidate-search"`; ports stay at the CLI defaults (API 54321, database 54322).
 
 ### 7.4 Seed script
 
@@ -920,6 +923,7 @@ supabase/
 scripts/
   seed.ts                       (7.4)
   write-env.ts                  (7.5)
+  package.json                  {"type": "module"} so Node runs the scripts as ES modules
   eval-search.ts                npm run eval:search
 
 tests/
