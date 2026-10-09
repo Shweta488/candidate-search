@@ -20,8 +20,9 @@ export class AppError extends Error {
   constructor(
     readonly code: ErrorCode,
     message: string,
+    options?: ErrorOptions, // { cause } keeps the underlying error for the log
   ) {
-    super(message);
+    super(message, options);
     this.name = "AppError";
   }
 
@@ -56,6 +57,7 @@ export function toErrorResponse(error: unknown, requestId: string): Response {
     return Response.json(body("invalid_request", `${field}: ${issue?.message ?? "invalid"}`), { status: 400 });
   }
   if (error instanceof AppError) {
+    if (error.cause) logError(requestId, error.cause); // for example why the LLM call failed
     return Response.json(body(error.code, error.message), { status: error.status });
   }
   const mapped = POSTGRES_CODES[postgresCode(error) ?? ""];

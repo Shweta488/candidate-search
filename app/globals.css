@@ -15,10 +15,14 @@
   --color-primary-soft: #eef2fe;
   --color-danger: #b42318;
   --color-danger-soft: #fef3f2;
+  --color-danger-line: #fbd5d1;
   --color-success: #157347;
   --color-success-soft: #ecfdf3;
   --color-warning: #92400e;
   --color-warning-soft: #fff8eb;
+  --color-warning-line: #f6ddb4;
+  --color-skeleton: #ececee;
+  --color-skeleton-shine: #f6f6f7;
 
   --text-xl: 1.625rem;
   --text-lg: 1.125rem;

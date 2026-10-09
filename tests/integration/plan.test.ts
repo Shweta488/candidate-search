@@ -1,7 +1,12 @@
-// GET /api/plan through the running app. Assumes the seed state (no searches used yet).
-import { api, RECRUITERS, signIn } from "./helpers";
+// GET /api/plan through the running app.
+import { api, RECRUITERS, resetSearches, signIn } from "./helpers";
 
 describe("GET /api/plan", () => {
+  beforeAll(async () => {
+    await resetSearches("acme");
+    await resetSearches("globex");
+  });
+
   it("returns 401 without a token", async () => {
     const { status, body } = await api("/api/plan");
     expect(status).toBe(401);

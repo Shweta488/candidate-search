@@ -29,3 +29,11 @@ export function getSupabaseEnv(source: Record<string, string | undefined> = proc
   if (source === process.env) supabaseEnv = env;
   return env;
 }
+
+// The model key is read from the shell (make dev refuses to start without it) and is
+// only used by src/server/search/extractFilters.ts.
+export function getAnthropicApiKey(source: Record<string, string | undefined> = process.env): string {
+  const key = source.ANTHROPIC_API_KEY?.trim();
+  if (!key) throw new Error("Missing environment variable: ANTHROPIC_API_KEY. Export it before make dev.");
+  return key;
+}

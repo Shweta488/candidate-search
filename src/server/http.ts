@@ -1,6 +1,7 @@
 import "server-only";
+import type { z } from "zod";
 import { requireRecruiter, type Recruiter } from "./auth";
-import { toErrorResponse } from "./errors";
+import { AppError, toErrorResponse } from "./errors";
 import { logRequest } from "./log";
 
 // The shape every recruiter route follows (LLD 4.3): auth, read input, call one service,
@@ -39,4 +40,32 @@ export function withRecruiter<P extends Params = Record<string, never>>(
 
 export function json(data: unknown, status = 200): Response {
   return Response.json(data, { status });
+}
+
+const MAX_BODY_BYTES = 16 * 1024; // LLD 1.1
+
+// Reads a JSON body: rejects bodies over 16 KB and anything that isn't JSON, then
+// validates with the schema (a ZodError becomes a 400 naming the field).
+export async function readJson<S extends z.ZodType>(request: Request, schema: S): Promise<z.infer<S>> {
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY_BYTES) throw tooLarge();
+  const text = await request.text();
+  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) throw tooLarge();
+
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    throw new AppError("invalid_request", "The request body must be JSON.");
+  }
+  return schema.parse(body);
+}
+
+// Validates path params or query values with the schema, the same way as a body.
+export function parseParams<S extends z.ZodType>(params: unknown, schema: S): z.infer<S> {
+  return schema.parse(params);
+}
+
+function tooLarge(): AppError {
+  return new AppError("invalid_request", "The request body must be 16 KB or less.");
 }

@@ -1,0 +1,71 @@
+[
+  {
+    "brief": "Golang backend devs in Austin who know k8s",
+    "note": "synonyms for a skill and a role",
+    "expected_filters": { "roles": ["Backend Engineer"], "cities": ["Austin"], "skills": ["Go", "Kubernetes"] }
+  },
+  {
+    "brief": "frontend engineers in Texas",
+    "note": "a state instead of a city",
+    "expected_filters": { "roles": ["Frontend Engineer"], "states": ["TX"] }
+  },
+  {
+    "brief": "data engineers with 5+ years of experience",
+    "note": "minimum years",
+    "expected_filters": { "roles": ["Data Engineer"], "min_years": 5 }
+  },
+  {
+    "brief": "machine learning engineers with less than 3 years of experience",
+    "note": "maximum years",
+    "expected_filters": { "roles": ["Machine Learning Engineer"], "max_years": 2 }
+  },
+  {
+    "brief": "mid-level DevOps engineers in Denver who are looking for a new role",
+    "note": "seniority synonym and open to work phrased differently",
+    "expected_filters": {
+      "roles": ["DevOps Engineer"],
+      "seniorities": ["mid"],
+      "cities": ["Denver"],
+      "open_to_work": true
+    }
+  },
+  {
+    "brief": "Python developers who studied at MIT",
+    "note": "a technology before 'developers' is a skill, not a role",
+    "expected_filters": { "skills": ["Python"], "schools": ["MIT"] }
+  },
+  {
+    "brief": "product designers with a master's degree",
+    "note": "degree synonym",
+    "expected_filters": { "roles": ["Product Designer"], "degrees": ["MS"] }
+  },
+  {
+    "brief": "marketing managers in California who have worked at an enterprise company",
+    "note": "state name and company type",
+    "expected_filters": {
+      "roles": ["Marketing Manager"],
+      "states": ["CA"],
+      "worked_at_company_types": ["enterprise"]
+    }
+  },
+  {
+    "brief": "staff-level people who have worked at Copperline",
+    "note": "a named past company, no role",
+    "expected_filters": { "seniorities": ["staff"], "worked_at_companies": ["Copperline"] }
+  },
+  {
+    "brief": "recruiters based in Chicago",
+    "note": "a role that is also a word in the product",
+    "expected_filters": { "roles": ["Recruiter"], "cities": ["Chicago"] }
+  },
+  {
+    "brief": "find me someone great",
+    "note": "vague: no requirement, so nobody",
+    "expected_ids": []
+  },
+  {
+    "brief": "backend engineers who are fluent in Spanish and willing to relocate to London",
+    "note": "unanswerable: language and a city not in the data, so nobody",
+    "expected_ids": []
+  }
+]

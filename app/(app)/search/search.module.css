@@ -1,5 +1,103 @@
-.note {
+.search {
+  display: grid;
+  gap: 20px;
+}
+
+.results {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.count {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.position {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cards {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.welcome {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.welcomeTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.welcomeText {
   margin: 0;
   max-width: 62ch;
   color: var(--color-text-muted);
+}
+
+.examples {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.examplesLabel {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.exampleList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.example {
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); /* long examples wrap on a phone */
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.example:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.planNote {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 1023px) {
+  .example {
+    min-height: 44px;
+  }
 }

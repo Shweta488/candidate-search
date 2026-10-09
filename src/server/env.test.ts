@@ -1,4 +1,4 @@
-import { getSupabaseEnv } from "./env";
+import { getAnthropicApiKey, getSupabaseEnv } from "./env";
 
 const valid = {
   NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
@@ -19,5 +19,16 @@ describe("getSupabaseEnv", () => {
     expect(() => getSupabaseEnv({ NEXT_PUBLIC_SUPABASE_URL: "not a url" })).toThrow(
       /NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY/,
     );
+  });
+});
+
+describe("getAnthropicApiKey", () => {
+  it("returns the key from the shell", () => {
+    expect(getAnthropicApiKey({ ANTHROPIC_API_KEY: "sk-ant-x" })).toBe("sk-ant-x");
+  });
+
+  it("names the variable when it is missing or blank", () => {
+    expect(() => getAnthropicApiKey({})).toThrow(/ANTHROPIC_API_KEY/);
+    expect(() => getAnthropicApiKey({ ANTHROPIC_API_KEY: " " })).toThrow(/ANTHROPIC_API_KEY/);
   });
 });

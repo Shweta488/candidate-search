@@ -29,6 +29,14 @@ describe("toErrorResponse", () => {
     expect(body).toEqual({ error: { code, message: "message" } });
   });
 
+  it("logs the cause of an AppError but returns only its message", async () => {
+    const error = new AppError("search_unavailable", "Search is unavailable.", { cause: new Error("timed out") });
+    const { status, body } = await read(toErrorResponse(error, "r7"));
+    expect(status).toBe(503);
+    expect(JSON.stringify(body)).not.toContain("timed out");
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("timed out"));
+  });
+
   it.each([
     ["23505", 409, "name_taken"],
     ["23503", 404, "not_found"],

@@ -1,6 +1,7 @@
+import { z } from "zod";
 import { requireRecruiter } from "./auth";
 import { AppError } from "./errors";
-import { json, withRecruiter } from "./http";
+import { json, parseParams, readJson, withRecruiter } from "./http";
 
 jest.mock("./auth", () => ({ requireRecruiter: jest.fn() }));
 
@@ -43,5 +44,35 @@ describe("withRecruiter", () => {
 
     expect(response.status).toBe(500);
     expect((await response.json()).error.message).toMatch(/^Something went wrong\. Reference: /);
+  });
+});
+
+describe("readJson", () => {
+  const schema = z.object({ brief: z.string() });
+  const post = (body: string) => new Request("http://localhost/api/search", { method: "POST", body });
+
+  it("parses and validates a JSON body", async () => {
+    await expect(readJson(post('{"brief":"go engineers"}'), schema)).resolves.toEqual({ brief: "go engineers" });
+  });
+
+  it("rejects a body that isn't JSON", async () => {
+    await expect(readJson(post("brief=go"), schema)).rejects.toMatchObject({ code: "invalid_request" });
+  });
+
+  it("rejects a body over 16 KB", async () => {
+    const body = JSON.stringify({ brief: "x".repeat(16 * 1024) });
+    await expect(readJson(post(body), schema)).rejects.toMatchObject({ message: expect.stringMatching(/16 KB/) });
+  });
+
+  it("lets the schema reject a wrong shape", async () => {
+    await expect(readJson(post('{"brief":3}'), schema)).rejects.toBeInstanceOf(z.ZodError);
+  });
+});
+
+describe("parseParams", () => {
+  it("validates with the schema", () => {
+    const schema = z.object({ id: z.string().min(1) });
+    expect(parseParams({ id: "s1" }, schema)).toEqual({ id: "s1" });
+    expect(() => parseParams({ id: "" }, schema)).toThrow(z.ZodError);
   });
 });
