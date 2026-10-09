@@ -824,7 +824,7 @@ Running `make setup` again is safe; it also resets the database to the seed stat
 `supabase/config.toml`, created by `supabase init` and then changed:
 
 - `[api] schemas = ["public", "private"]` (2.1).
-- `[auth] enable_signup = false` and `[auth.email] enable_signup = false`: recruiters exist only because the seed creates them.
+- `[auth] enable_signup = false`: recruiters exist only because the seed creates them. `[auth.email] enable_signup` stays `true`, because that switch also turns email sign-in on.
 - `[db.seed] enabled = false`: `scripts/seed.ts` seeds instead (7.4).
 - Studio, Storage, Realtime, Edge Functions, analytics and the local email server are turned off. The app uses only Postgres, Auth and the REST API, so `make setup` downloads less and starts faster.
 - `project_id = "candidate-search"`; ports stay at the CLI defaults (API 54321, database 54322).
