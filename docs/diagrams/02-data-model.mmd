@@ -1,12 +1,13 @@
 %% LLD: data model, based on the real shape of candidates.json.
-%% public schema: reachable through PostgREST, RLS on every table.
-%% private schema: not exposed, only the Next.js server (secret key) touches it.
+%% public schema (recruiter's own token, RLS): recruiters, shortlists, shortlist_members, saved_briefs.
+%% private schema (server only, secret key): companies, candidates, experiences, educations,
+%% searches, search_results, subscriptions, stripe_events. See LLD section 2.
 erDiagram
     companies ||--o{ recruiters : employs
     companies ||--o{ shortlists : owns
     companies ||--o{ saved_briefs : owns
     companies ||--o{ searches : runs
-    companies ||--o{ subscriptions : "billed by (private)"
+    companies ||--o{ subscriptions : "billed by"
     shortlists ||--o{ shortlist_members : contains
     candidates ||--o{ shortlist_members : "listed in"
     searches ||--o{ search_results : "ranked rows"
@@ -16,7 +17,7 @@ erDiagram
 
     companies {
         uuid id PK
-        text slug UK "acme or globex"
+        text code UK "acme or globex"
         text name
         int searches_used "free plan counter"
     }
@@ -68,7 +69,7 @@ erDiagram
     }
     shortlists {
         uuid id PK
-        uuid company_id FK "defaults to caller's company"
+        uuid company_id FK "set by the server, checked by RLS"
         text name
         timestamptz created_at
     }

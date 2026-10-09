@@ -29,13 +29,14 @@ Types: `feat`, `fix`, `test`, `docs`, `chore`, `refactor`, `perf`, `style`. Scop
 - **UI** (`app/(app)`, `src/components`, `src/client`) never imports from `src/server`.
 - **API** (`app/api/**/route.ts`) stays thin: auth gate, zod parse, call one service, map errors to HTTP.
 - **Services** (`src/server`) start with `import 'server-only'` and hold all business logic.
+- **Shared types** (`src/shared`) hold TypeScript types only (no code, no secrets) and may be imported by any layer.
 - **Data** (`supabase/migrations`, `scripts/seed.ts`) owns schema, RLS, grants and SQL functions. Schema changes only via a new migration file, never by editing an applied one after it is pushed.
 
 ## 4. Security rules (non-negotiable)
 
 - The secret Supabase key and the model key are read only in `src/server`. Never prefix them with `NEXT_PUBLIC_`.
 - `company_id` always comes from the database lookup of the signed-in user, never from a request body, query or header.
-- Every table with company data has RLS enabled with both a read rule (`USING`) and a write rule (`WITH CHECK`), and a test that tries to cross companies.
+- Every table in `public` has RLS enabled with both a read rule (`USING`) and a write rule (`WITH CHECK`), and a test that tries to cross companies. Every table in `private` has RLS enabled with no policies, so only the server's secret key can use it.
 - Every function in the `private` schema has `EXECUTE` revoked from `PUBLIC`, `anon` and `authenticated`.
 - No SQL built by string concatenation. Filters reach SQL only as typed parameters.
 - The LLM receives the brief only. Never send candidate data to the model.

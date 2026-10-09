@@ -138,7 +138,7 @@ Each deep dive states the problem, the decision and why. Diagrams carry the step
 
 ### 6.4 Tenant isolation, including direct Supabase calls (diagram 06)
 
-**Decision:** three layers. The API takes the company from the database, never from the request. Company data is read and written as the recruiter (their token), so Postgres Row Level Security applies. Every company table has an RLS policy with a **read rule** (`USING`, an automatic `WHERE company_id = my company` on every select, update and delete) and a **write rule** (`WITH CHECK`, which rejects any inserted or updated row that would belong to another company); no grants on candidates or the `private` schema, and `EXECUTE` revoked on private functions.
+**Decision:** three layers. The API takes the company from the database, never from the request. Shortlists and saved searches are read and written as the recruiter (their token), so Postgres Row Level Security applies. Every company table in `public` has an RLS policy with a **read rule** (`USING`, an automatic `WHERE company_id = my company` on every select, update and delete) and a **write rule** (`WITH CHECK`, which rejects any inserted or updated row that would belong to another company); everything else (candidates, the search counter, searches, billing) lives in a `private` schema with no access for recruiters, RLS enabled with no policies, and `EXECUTE` revoked on private functions.
 
 **Why:** the RLS layer is what stops a recruiter who calls Supabase directly with their own token. Candidates are only readable through our server so the free limit can't be bypassed.
 
@@ -178,8 +178,8 @@ Paging is a primary-key read. A new search uses Haiku with a cached prompt, shor
 
 ## 9. Code organisation
 
-Three layers with a clear split between data, API and UI. **UI:** `app/(app)` pages, `src/components`, `src/client` (fetch wrapper that adds the token). **API:** `app/api/**/route.ts`, thin handlers that check auth, validate input and call server code. **Server and data:** `src/server` (server-only business logic by feature) and `supabase/migrations` plus `scripts/seed.ts` (schema, RLS, SQL functions, seed). UI code never imports server code.
+Three layers with a clear split between data, API and UI. **UI:** `app/(app)` pages, `src/components`, `src/client` (fetch wrapper that adds the token). **API:** `app/api/**/route.ts`, thin handlers that check auth, validate input and call server code. **Shared:** `src/shared` (TypeScript types only, used by both sides). **Server and data:** `src/server` (server-only business logic by feature) and `supabase/migrations` plus `scripts/seed.ts` (schema, RLS, SQL functions, seed). UI code never imports server code.
 
 ## 10. UI (summary)
 
-Screens: sign in, search, candidate, shortlists, saved searches. Search shows each understood filter as an editable filter tag, a "Couldn't filter on" note when relevant, result cards with an "Add to list" action, and Previous / Next paging. A plan pill shows searches left; at the limit, an Upgrade panel replaces results. Loading, empty and error states are designed, and everything works at phone width. The full visual design (tokens, mockups) comes in `docs/UI_DESIGN.md` in the next PR.
+Screens: sign in, search, candidate, shortlists, saved searches. Search shows each understood filter as an editable filter tag, a "Couldn't filter on" note when relevant, result cards with an "Add to list" action, and Previous / Next paging. A plan pill shows searches left; at the limit, an Upgrade panel replaces results. Loading, empty and error states are designed, and everything works at phone width. Design tokens, page states and the accessibility checklist are in [LLD.md](LLD.md) section 6.7.

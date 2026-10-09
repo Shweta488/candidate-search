@@ -1,13 +1,13 @@
 %% LLD: every API request, how it is authorised, and what it touches.
-%% user client = publishable key + caller's token, every query runs under RLS
-%% server client = secret key, only used for the paths marked (server)
+%% recruiter client = publishable key + caller's token, every query runs under RLS
+%% server client = secret key, used for the paths marked (server). See LLD section 4.
 flowchart LR
     C(["Client<br/>(browser or grader script)"])
 
     subgraph Gate["Gate for every recruiter route"]
         G1["Authorization: Bearer token"]
         G2["supabase.auth.getUser(token)<br/>401 if missing or invalid"]
-        G3["load recruiter row<br/>company_id from the database, never from the request"]
+        G3["load recruiter row (server client)<br/>company_id from the database, never from the request"]
         G1 --> G2 --> G3
     end
 
@@ -41,11 +41,12 @@ flowchart LR
     C --> W1
     G3 --> S1 & S2 & S3 & P1 & L1 & L2 & L3 & B1 & B2 & PL
 
-    S1 -- "(server) spend_search_credit, LLM, run_search" --> T1[("companies, searches,<br/>search_results, candidates")]
-    S2 -- "user client: 20 rows by (search_id, rank)<br/>never touches the quota" --> T1
+    S1 -- "(server) spend_search_credit, LLM, run_search" --> T1[("private: companies, searches,<br/>search_results, candidates")]
+    S2 -- "(server) get_search_page: 20 rows by (search_id, rank)<br/>scoped to my company, never touches the quota" --> T1
     S3 -- "(server) distinct values, cached in memory" --> T2
-    P1 -- "(server) read one candidate" --> T2[("candidates, experiences, educations")]
-    L1 & L2 & L3 -- "user client, RLS: my company only" --> T3[("shortlists, shortlist_members")]
-    B1 & B2 -- "user client, RLS: my company only" --> T4[("saved_briefs")]
-    PL -- "(server) plan + counter for my company" --> T5[("companies, private.subscriptions")]
-    W2 -- "(server) private.apply_stripe_event" --> T6[("private.stripe_events,<br/>private.subscriptions")]
+    P1 -- "(server) read one candidate" --> T2[("private: candidates, experiences, educations")]
+    P1 -- "recruiter client: my shortlist_ids" --> T3
+    L1 & L2 & L3 -- "recruiter client, RLS: my company only" --> T3[("public: shortlists, shortlist_members")]
+    B1 & B2 -- "recruiter client, RLS: my company only" --> T4[("public: saved_briefs")]
+    PL -- "(server) get_plan for my company" --> T5[("private: companies, subscriptions")]
+    W2 -- "(server) apply_stripe_event" --> T6[("private: stripe_events,<br/>subscriptions")]
