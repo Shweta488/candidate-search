@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { api, toApiError, type ApiError } from "@/client/api";
 import { usePlan } from "@/client/plan";
+import { sameFilters } from "@/client/filterDraft";
 import { useApiQuery } from "@/client/useApiQuery";
 import { BriefForm } from "@/components/BriefForm/BriefForm";
 import { Button } from "@/components/Button/Button";
@@ -13,7 +14,7 @@ import { FilterTags } from "@/components/FilterTags/FilterTags";
 import { PageHeading } from "@/components/PageHeading/PageHeading";
 import { Pager } from "@/components/Pager/Pager";
 import { StatePanel } from "@/components/StatePanel/StatePanel";
-import type { SearchPage, SearchResponse } from "@/shared/types";
+import type { Filters, PlanResponse, SearchPage, SearchResponse } from "@/shared/types";
 import styles from "./search.module.css";
 
 // The search page (LLD 6.5). The URL holds the search being shown (?id=…&page=n), so
@@ -45,7 +46,9 @@ function Search() {
 
   const [posted, setPosted] = useState<SearchResponse | null>(null);
   const [searching, setSearching] = useState(false);
-  const [postError, setPostError] = useState<{ brief: string; error: ApiError } | null>(null);
+  const [postError, setPostError] = useState<{ brief: string; filters?: Filters; error: ApiError } | null>(null);
+  // Filters the recruiter is editing, for the search they were shown on.
+  const [draft, setDraft] = useState<{ searchId: string; filters: Filters } | null>(null);
   const [example, setExample] = useState(""); // an example brief the recruiter picked
 
   // Page 1 of a search we just ran is already here; anything else is read from the API.
@@ -55,15 +58,17 @@ function Search() {
   );
   const shown = showPosted ? posted : searchId ? query.data : undefined;
 
-  async function search(brief: string) {
+  // A new search. With filters (a corrected search) the server skips the LLM, but it
+  // still counts as a search (product decision 1).
+  async function search(brief: string, filters?: Filters) {
     setSearching(true);
     setPostError(null);
     try {
-      const result = await api.post<SearchResponse>("/api/search", { brief });
+      const result = await api.post<SearchResponse>("/api/search", filters ? { brief, filters } : { brief });
       setPosted(result);
       router.push(`/search?id=${encodeURIComponent(result.search_id)}`);
     } catch (error) {
-      setPostError({ brief, error: toApiError(error) });
+      setPostError({ brief, filters, error: toApiError(error) });
     } finally {
       setSearching(false);
       plan.reload(); // the searches left changed (or the limit was reached)
@@ -75,6 +80,7 @@ function Search() {
   const missing = searchId !== null && isNotFound(query.error);
   const failed = postError !== null && !inputError;
   const starting = !searching && !failed && !shown && (searchId === null || missing);
+  const draftFilters = shown && draft?.searchId === shown.search_id ? draft.filters : shown?.filters;
 
   return (
     <div className={styles.search}>
@@ -86,12 +92,22 @@ function Search() {
         error={inputError}
         onSearch={search}
       />
+      {shown && draftFilters && !searching && !failed && (
+        <FilterBar
+          filters={draftFilters}
+          changed={!sameFilters(draftFilters, shown.filters)}
+          plan={plan.plan}
+          onChange={(filters) => setDraft({ searchId: shown.search_id, filters })}
+          onUndo={() => setDraft(null)}
+          onRun={() => search(shown.brief, draftFilters)}
+        />
+      )}
       {/* Announces the results count and state messages to screen readers. */}
       <div className={styles.results} aria-live="polite">
         {searching ? (
           <Searching />
         ) : failed ? (
-          <SearchFailed error={postError.error} onRetry={() => search(postError.brief)} />
+          <SearchFailed error={postError.error} onRetry={() => search(postError.brief, postError.filters)} />
         ) : starting ? null : searchId && !shown ? (
           query.error ? (
             <LoadFailed onRetry={query.reload} />
@@ -99,7 +115,7 @@ function Search() {
             <Searching />
           )
         ) : shown ? (
-          <Results page={shown} />
+          <Results page={shown} plan={plan.plan} onSearchWithout={() => search(shown.brief, shown.filters)} />
         ) : null}
       </div>
       {starting && <Welcome onPick={setExample} />}
@@ -167,42 +183,93 @@ function Searching() {
   );
 }
 
-function Results({ page }: { page: SearchPage }) {
+// The filters of the search being shown, editable. After a change, says that running
+// them is a new search (and what that means on the free plan) before anything runs.
+function FilterBar(props: {
+  filters: Filters;
+  changed: boolean;
+  plan: PlanResponse | undefined;
+  onChange: (filters: Filters) => void;
+  onUndo: () => void;
+  onRun: () => void;
+}) {
+  return (
+    <div className={styles.filterBar}>
+      <FilterTags filters={props.filters} onChange={props.onChange} />
+      {props.changed && (
+        <div className={styles.changed}>
+          <p className={styles.changedText} role="status">
+            You changed the filters. Running them is a new search. <SearchCost plan={props.plan} />
+          </p>
+          <div className={styles.changedActions}>
+            <Button size="sm" onClick={props.onRun}>
+              Run search
+            </Button>
+            <Button size="sm" variant="ghost" onClick={props.onUndo}>
+              Undo changes
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// What a new search costs on the free plan. Nothing to say on the paid plan.
+function SearchCost({ plan }: { plan: PlanResponse | undefined }) {
+  if (plan?.plan !== "free") return null;
+  return plan.searches_remaining === 0 ? (
+    <>You&apos;ve used your free search, so it can&apos;t run on the free plan.</>
+  ) : (
+    <>This uses your free search.</>
+  );
+}
+
+function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSearchWithout: () => void }) {
+  const { page } = props;
   const hasFilters = Object.keys(page.filters).length > 0;
 
   if (page.unsupported.length > 0) {
     return (
-      <>
-        <FilterTags filters={page.filters} />
-        <StatePanel tone="warning" title={`Couldn't filter on: ${page.unsupported.join(", ")}`}>
-          We search on role, seniority, location, skills, education and past companies. We&apos;re showing nobody
-          rather than the wrong people.
-        </StatePanel>
-      </>
+      <StatePanel
+        tone="warning"
+        title={`Couldn't filter on: ${page.unsupported.join(", ")}`}
+        action={
+          hasFilters && (
+            <div className={styles.panelAction}>
+              <Button variant="secondary" onClick={props.onSearchWithout}>
+                Search without these
+              </Button>
+              <span className={styles.cost}>
+                <SearchCost plan={props.plan} />
+              </span>
+            </div>
+          )
+        }
+      >
+        We search on role, seniority, location, skills, education and past companies. We&apos;re showing nobody
+        rather than the wrong people.
+      </StatePanel>
     );
   }
   if (!hasFilters) {
     return (
       <StatePanel tone="plain" title="We couldn't find any requirement in that brief.">
-        Try a role, skill, location or seniority.
+        Try a role, skill, location or seniority, or add a filter yourself.
       </StatePanel>
     );
   }
   if (page.total === 0) {
     return (
-      <>
-        <FilterTags filters={page.filters} />
-        <StatePanel tone="plain" title="No candidates match all of these filters.">
-          Try removing a filter.
-        </StatePanel>
-      </>
+      <StatePanel tone="plain" title="No candidates match all of these filters.">
+        Try removing a filter.
+      </StatePanel>
     );
   }
 
   const matchedSkills = page.filters.skills ?? [];
   return (
     <>
-      <FilterTags filters={page.filters} />
       <div className={styles.head}>
         <h2 className={styles.count}>
           {page.total} {page.total === 1 ? "candidate" : "candidates"}
