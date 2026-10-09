@@ -19,3 +19,18 @@ export function logError(requestId: string, error: unknown): void {
   const detail = error instanceof Error ? { message: error.message, stack: error.stack } : { error };
   console.error(JSON.stringify({ type: "error", request_id: requestId, ...detail }));
 }
+
+export type SearchLog = {
+  request_id: string;
+  search_id: string;
+  company_id: string;
+  llm_ms: number;
+  sql_ms: number;
+  total_ms: number;
+  total: number;
+  cache_read_input_tokens: number;
+};
+
+export function logSearch(entry: SearchLog): void {
+  console.log(JSON.stringify({ type: "search", ...entry }));
+}

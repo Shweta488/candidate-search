@@ -328,7 +328,7 @@ All in `private`, `security invoker`, `set search_path = ''` with fully qualifie
 | `get_plan(p_company_id uuid)` | `plan text, searches_remaining int` | plan and searches left for `/api/plan` | 4 |
 | `get_vocabulary()` | `jsonb` | distinct values per filter field, used for the LLM tool schema, zod and `/api/vocabulary` | 3 |
 | `run_search(p_company_id uuid, p_brief text, p_filters ..., p_unsupported text[])` | `search_id uuid, total int` | filter, rank, store all matches in `search_results` in one transaction | 3 |
-| `get_search_page(p_company_id uuid, p_search_id uuid, p_page int)` | rows of candidate summary columns, plus `total` | page read, scoped to the company; no row means `404` | 3 |
+| `get_search_page(p_company_id uuid, p_search_id uuid, p_page int)` | `jsonb`: the search (`brief`, `filters`, `unsupported`, `total`) and that page's `CandidateSummary` results | page read, scoped to the company; `null` means `404` | 3 |
 | `apply_stripe_event(...)` | `outcome text` | dedupe, order check and upsert in one transaction | 5 |
 
 The free limit (1) is a constant inside `spend_search_credit` and `get_plan`.
