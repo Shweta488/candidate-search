@@ -824,6 +824,19 @@ Docker Desktop running, Node 24 (pinned in `.nvmrc` and `package.json` `engines`
 
 Running `make setup` again is safe; it also resets the database to the seed state.
 
+```mermaid
+%% How `make setup` and `make dev` bring the app up on a clean Mac.
+flowchart LR
+    S0["make setup"] --> S1["check Node 24 + Docker running"]
+    S1 --> S2["npm ci<br/>(lockfile, pinned supabase CLI 2.119.0)"]
+    S2 --> S3["npx supabase stop --no-backup<br/>(discard any old local database)"]
+    S3 --> S4["npx supabase start<br/>applies migrations"]
+    S4 --> S5["node scripts/seed.ts<br/>companies, 2 recruiters,<br/>5,000 candidates + derived columns"]
+    S5 --> S6["node scripts/write-env.ts<br/>.env.local from supabase status<br/>(local URL + keys only)"]
+    D0["make dev"] --> D1["next dev on :3000<br/>reads ANTHROPIC_API_KEY,<br/>STRIPE_WEBHOOK_SECRET from env"]
+    S6 -.-> D0
+```
+
 ### 7.3 Supabase config
 
 `supabase/config.toml`, created by `supabase init` and then changed:

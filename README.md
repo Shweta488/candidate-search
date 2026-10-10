@@ -8,10 +8,10 @@ Recruiters describe who they want in plain English; Claude turns the brief into 
 
 ## How to review (about 15 minutes)
 
-1. This page, then [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (requirements, API, high-level design, deep dives) and the diagrams in [docs/DIAGRAMS.md](docs/DIAGRAMS.md) (the request map shows every route).
+1. This page, then [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (requirements, API, high-level design, deep dives, decisions; the diagrams are inline, and the request map in section 3 shows every route).
 2. Core code, in this order: `supabase/migrations` (schema, RLS), `src/server/search` (LLM and SQL), `src/server/plan.ts` (free plan), `src/server/billing` (webhook), `app/api` (thin routes).
-3. Run the checks with the app running: `npm test` (unit), `npm run test:integration` (tenancy, free plan, billing, hostile briefs, latency), `npm run e2e` (Cypress), `npm run eval:search` (accuracy report), and `npm run build && npm run check:secrets` (with `make dev` stopped). Details in [docs/TESTING.md](docs/TESTING.md).
-4. Decisions and their reasons are in [docs/DECISIONS.md](docs/DECISIONS.md); the commit history follows [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md); working rules are in [RULES.md](RULES.md).
+3. Run the checks with the app running: `npm test` (unit), `npm run test:integration` (tenancy, free plan, billing, hostile briefs, latency), `npm run e2e` (Cypress), `npm run eval:search` (accuracy report), and `npm run build && npm run check:secrets` (with `make dev` stopped). `test:integration`, `e2e` and `eval:search` together call Claude about 40 times, a few cents. Details in [docs/TESTING.md](docs/TESTING.md).
+4. Decisions and their reasons are in [ARCHITECTURE.md section 7](docs/ARCHITECTURE.md#7-decisions); the commit history follows [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md); working rules are in [RULES.md](RULES.md).
 
 ## Screens
 

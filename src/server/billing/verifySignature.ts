@@ -16,7 +16,7 @@ export type SignatureInput = {
   rawBody: string;
   secret: string;
   nowSeconds: number;
-  toleranceSeconds?: number; // unset: no age check (DECISIONS, Oct 8)
+  toleranceSeconds?: number; // unset: no age check (ARCHITECTURE 7.1)
 };
 
 export function verifySignature(input: SignatureInput): SignatureResult {

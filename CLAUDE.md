@@ -6,4 +6,4 @@ Read and follow [RULES.md](RULES.md) before making any change. The most importan
 - Respect the layer boundaries and security rules in RULES.md sections 3 and 4.
 - Prefer plain, readable code, and explain non-obvious changes in the summary you give for review.
 
-Context: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design, [docs/LLD.md](docs/LLD.md) for the detailed design, [docs/DECISIONS.md](docs/DECISIONS.md) for decisions already made (do not reopen them without asking), and [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for story and commit order.
+Context: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design, [docs/LLD.md](docs/LLD.md) for the detailed design, [ARCHITECTURE.md section 7](docs/ARCHITECTURE.md#7-decisions) for decisions already made (do not reopen them without asking), and [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for story and commit order.
