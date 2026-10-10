@@ -688,7 +688,7 @@ How the browser side is built, and the visual rules every screen follows (6.7).
 |---|---|---|
 | `/` | `app/page.tsx` | redirects to `/search` |
 | `/sign-in` | `app/(auth)/sign-in/page.tsx` | redirects to `/search` if already signed in |
-| `/search` | `app/(app)/search/page.tsx` | empty brief box |
+| `/search` | `app/(app)/search/page.tsx` | the start page: empty brief box, then the newest saved searches and shortlists, or example briefs |
 | `/search?id={search_id}&page={n}` | same page | loads that search with `GET /api/search/{id}`; refresh and back keep the results |
 | `/people/{id}` | `app/(app)/people/[id]/page.tsx` | |
 | `/shortlists` | `app/(app)/shortlists/page.tsx` | |
@@ -706,6 +706,7 @@ Each `page.tsx` is a small server file that sets the page title (`metadata`, wit
 - supabase-js stores the session in `localStorage` and refreshes the access token before it expires.
 - `SessionProvider` (`src/client/session.tsx`, in the root layout) exposes `{ session, status: 'loading' | 'signed-in' | 'signed-out', signOut }` and follows `onAuthStateChange`.
 - Guard in `app/(app)/layout.tsx`: while `loading`, render nothing but the header shell; when `signed-out`, `router.replace('/sign-in?next=<current path>')`. After sign-in, go to `next` if it is a same-site path, else `/search`.
+- Pressing Sign out goes to plain `/sign-in` with no `next`, so the next sign-in (perhaps as another company) starts on Search. Only a visit made while signed out, such as a shared link, returns to the page asked for.
 
 ### 6.3 API client
 
@@ -743,9 +744,16 @@ Data loading uses one small hook, `useApiQuery(path)`, returning `{ data, error,
 | Next / Previous | `GET /api/search/{id}?page=n` | `router.push` with the new page |
 | Open the page with `?id=` | `GET /api/search/{id}?page=n` | show it; `404` shows the welcome (6.7) |
 | Save search | `POST /api/saved-briefs { brief, filters }` | "Saved" confirmation |
-| Add to list | `GET /api/shortlists` when the menu opens; `POST /api/shortlists/{id}/people/{personId}` | "Added to …" or "Already on …" (`added: false`) |
+| Add to list | `GET /api/shortlists` when the menu opens; `POST /api/shortlists/{id}/people/{personId}` | "Added to …" or "Already on …" (`added: false`); the button then reads "✓ On {list}" |
+| Open the start page (no `?id=`) | `GET /api/saved-briefs`, `GET /api/shortlists` | the 2 newest saved searches and the 2 newest shortlists as tiles, each a link, with "View all (n)" at the end of each row; with no saved searches, the intro and example briefs |
 
-On the free plan, running edited filters or a saved search first says it will use a search (product decision 1).
+On the free plan, running edited filters or a saved search first says it will use a search (ARCHITECTURE 7.1).
+
+**Result cards.** The whole card opens the candidate: the name is the link and its click area is stretched over the card, with the Add to list button on top. A candidate already on one of the recruiter's lists shows "✓ On {list name}", or "✓ On 2 lists" for several, and the menu ticks those lists while still adding to others. List names are loaded with `GET /api/shortlists` only when someone on the page is on a list.
+
+**Filter values.** Tags and the filter editor show seniority and company type the way result cards do ("Senior", "Mid-level", "Startup") and open to work as "Yes" / "No". This is display only: the values sent to the API are unchanged. A saved search's brief is shown exactly as it was typed.
+
+**Brief box.** One rounded box holds the text area and, inside it on the right, centred top to bottom, a round search button (a magnifier icon, named "Search" for screen readers), with the hint "Enter to search · Shift+Enter for a new line" (hidden on a phone). The focus ring is drawn on the box.
 
 Re-running a saved search from `/saved-searches` posts its brief and filters, then navigates to `/search?id=…`.
 
@@ -789,14 +797,14 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 
 | State | Shown in place of results |
 |---|---|
-| Searching | 3 skeleton cards; button reads "Searching…" |
+| Searching | 3 skeleton cards under a "Searching…" heading; the search button is disabled and named "Searching…" |
 | No matches | "No candidates match all of these filters. Try removing a filter." |
 | Unsupported ask | "Couldn't filter on: {items}. We're showing nobody rather than the wrong people." Understood filters stay visible, with **Search without these** to run only them (a new search) |
 | No filters understood | "We couldn't find any requirement in that brief. Try a role, skill, location or seniority." |
 | `402` | "You've used your free search." + Upgrade. Paging and shortlisting earlier searches still work |
 | `503` | "Search is unavailable right now. Your search wasn't used." + Try again |
 | `500`, network | "Something went wrong." + Try again |
-| No search yet, or `404` on `?id=` (an old or wrong link) | A welcome: "Find the right people by describing them", one line on what happens, three example briefs (clicking one fills the box without searching) and, on the free plan, how many searches are left. No error message |
+| No search yet, or `404` on `?id=` (an old or wrong link) | The start page, with no error message. With nothing saved: "Find the right people by describing them", one line on what happens, and three example briefs (clicking one fills the box without searching). With saved searches: straight to "Saved searches" and "Shortlists", each showing its 2 newest as tiles (a saved search opens the Saved searches page, a list opens that list) with "View all (n)" at the end of the row. On the free plan, how many searches are left |
 
 **Accessibility checklist** (WCAG 2.1 AA)
 
@@ -804,7 +812,7 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 - Visible focus: 2 px `--color-primary` outline, 2 px offset, on `:focus-visible`.
 - One `h1` per page; after navigation focus moves to it and the document title updates.
 - The results count and status messages are `aria-live="polite"`; form errors use `role="alert"`.
-- Every input has a visible label; icon-only buttons have an `aria-label`.
+- Every input has a visible label; icon-only buttons have a name for screen readers (an `aria-label` or hidden text).
 - Native `<select>`, `<datalist>` and `<dialog>` for pickers and dialogs.
 - Avatars and logos use `alt=""` (the name is next to them).
 - Motion off under `prefers-reduced-motion`.

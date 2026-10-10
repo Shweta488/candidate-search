@@ -28,8 +28,9 @@ Open http://localhost:3000 and sign in as `recruiter@acme.test` or `recruiter@gl
 
 | | |
 |---|---|
-| ![Couldn't filter on](docs/screenshots/desktop-08-unsupported.png) | ![Candidate](docs/screenshots/desktop-04-candidate.png) |
-| ![Shortlist](docs/screenshots/desktop-06-shortlist.png) | ![Upgrade dialog](docs/screenshots/desktop-10-upgrade-dialog.png) |
+| ![Start page with saved searches](docs/screenshots/desktop-02-search-welcome.png) | ![Couldn't filter on](docs/screenshots/desktop-08-unsupported.png) |
+| ![Candidate](docs/screenshots/desktop-04-candidate.png) | ![Shortlist](docs/screenshots/desktop-06-shortlist.png) |
+| ![Upgrade dialog](docs/screenshots/desktop-10-upgrade-dialog.png) | |
 
 On a phone: [results](docs/screenshots/phone-03-search-results.png), [candidate](docs/screenshots/phone-04-candidate.png), [saved searches](docs/screenshots/phone-07-saved-searches.png), [limit](docs/screenshots/phone-09-limit.png). `npm run screenshots` takes them again from the running app.
 
@@ -38,6 +39,7 @@ On a phone: [results](docs/screenshots/phone-03-search-results.png), [candidate]
 The data is fully structured with closed vocabularies (13 roles, 4 seniority levels, 10 cities, 79 skills, schools, degrees, company types). The 10 sample briefs are reproduced exactly by AND-ing those fields, so search is a translation problem. Claude Haiku receives the brief and a forced tool whose schema lists every allowed value as an enum. The validated filters go to one static SQL statement as typed parameters. Every match is stored with a fixed rank, so paging is a primary-key read and each person appears exactly once.
 
 - **Understanding the brief:** Claude maps phrasing to exact values ("Golang" is Go, "NYC" is New York, "looking for a new role" is open to work). "Engineers", "software engineers" or "developers" with no qualifier mean every engineering role, so "software engineers in California" finds all 831 of them, and "senior engineers in Denver" leaves out product managers.
+- **Reading the results:** filter tags can be edited, removed or added; each card opens the candidate and says which of your shortlists they are already on. The start page shows your newest saved searches and shortlists at a glance.
 - **Ranking:** closer matches first (people who match more of the brief's companies, schools or degrees), then open to work, then most experienced. Every result matches every requirement.
 - **Why not keyword or embedding search:** headlines and job descriptions are generated from the same structured fields, so they add nothing to match on. Fuzzy matching would add wrong people and could never return nobody, and the answer is an exact set of people.
 
@@ -87,8 +89,10 @@ Every decision and the alternatives considered are in [ARCHITECTURE.md](docs/ARC
 
 ## With another week
 
+- Free narrowing: adding a filter to a search you already ran only narrows results you were already given, so it could run without using a search. The server must first prove the new filters are a strict narrowing of the stored search (every list a subset, required skills a superset, the years range inside the old one).
 - Cache filters per normalised brief, so a repeated brief skips Claude.
 - Keyword or embedding search alongside the filters, once profiles carry free text (resumes, bios) that no field covers.
+- In the search box: recent searches and suggestions as you type. On result cards: remove from a list from the same menu that adds.
 - Soft preferences and "did you mean" suggestions when results are empty.
 - A regression set of a few hundred labelled briefs.
 - Streaming the filter tags while results load; an audit log for billing events.

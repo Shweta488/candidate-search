@@ -36,6 +36,7 @@ function apiPost(
 }
 
 const README_SHOTS = new Set([
+  "desktop-02-search-welcome",
   "desktop-03-search-results",
   "desktop-04-candidate",
   "desktop-06-shortlist",
@@ -51,7 +52,7 @@ for (const size of SIZES) {
   describe(`Screens (${size.name})`, () => {
     const shot = (name: string) => {
       if (!README_SHOTS.has(`${size.name}-${name}`)) return;
-      cy.wait(300); // let fonts and images settle
+      cy.wait(800); // let fonts and images settle
       cy.screenshot(`${size.name}-${name}`, { capture: size.capture, overwrite: true });
     };
 
@@ -83,28 +84,40 @@ for (const size of SIZES) {
       cy.visit("/sign-in");
       signIn("recruiter@acme.test");
       cy.contains("h1", "Find candidates").should("be.visible");
-      shot("02-search-welcome");
 
       apiPost("/api/search", { brief: BRIEF, filters: FILTERS }).then(({ body }) => {
         const searchId = body.search_id as string;
         const firstId = body.results?.[0]?.id as string;
-        cy.visit(`/search?id=${searchId}`);
-        cy.contains("h2", "candidates").should("be.visible");
-        shot("03-search-results");
 
-        cy.visit(`/people/${firstId}`);
-        cy.get("h1").should("be.visible");
-        shot("04-candidate");
-
-        apiPost("/api/shortlists", { name: "Frontend, New York" }).then(({ body: list }) => {
-          for (const result of body.results?.slice(0, 3) ?? []) {
+        // Two results go on a list first, so the results show who is already shortlisted
+        // and the start page has a shortlist to show.
+        apiPost("/api/shortlists", { name: "NY frontend" }).then(({ body: list }) => {
+          for (const result of body.results?.slice(0, 2) ?? []) {
             apiPost(`/api/shortlists/${list.id}/people/${result.id}`, {});
           }
+
+          // The start page as a recruiter with a free search left sees it.
+          cy.task("resetSearches", "acme");
+          cy.visit("/search");
+          cy.contains("h2", "Saved searches").should("be.visible");
+          cy.contains("h2", "Shortlists").should("be.visible");
+          shot("02-search-welcome");
+
+          cy.task("useFreeSearch", "acme");
+          cy.visit(`/search?id=${searchId}`);
+          cy.contains("h2", "candidates").should("be.visible");
+          cy.contains("button", "✓ On NY frontend").should("be.visible");
+          shot("03-search-results");
+
+          cy.visit(`/people/${firstId}`);
+          cy.get("h1").should("be.visible");
+          shot("04-candidate");
+
           cy.visit("/shortlists");
-          cy.contains("Frontend, New York").should("be.visible");
+          cy.contains("NY frontend").should("be.visible");
           shot("05-shortlists");
           cy.visit(`/shortlists/${list.id}`);
-          cy.contains("h1", "Frontend, New York").should("be.visible");
+          cy.contains("h1", "NY frontend").should("be.visible");
           shot("06-shortlist");
         });
       });
