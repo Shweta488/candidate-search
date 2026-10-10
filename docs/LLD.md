@@ -143,7 +143,7 @@ Two lists may have the same name; the id identifies a list.
 | Route | Request | Response | Errors |
 |---|---|---|---|
 | `GET /api/saved-briefs` | | `200 { "saved_briefs": [{ "id", "brief", "filters", "created_at" }] }`, newest first | 401 |
-| `POST /api/saved-briefs` | `{ "brief", "filters" }`, filters validated like a search | `201 { "id" }` | 400, 401 |
+| `POST /api/saved-briefs` | `{ "brief", "filters" }`. `filters` is any JSON object: keys a search doesn't know are ignored and not stored, the known keys are validated like a search | `201 { "id" }` | 400, 401 |
 | `DELETE /api/saved-briefs/{id}` | | `204` | 401, 404 |
 
 Re-running a saved search is `POST /api/search` with its `brief` and `filters`.

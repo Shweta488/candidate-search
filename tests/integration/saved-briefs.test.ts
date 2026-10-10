@@ -69,9 +69,23 @@ describe("saved searches", () => {
     });
   });
 
+  it("ignores filter keys it doesn't know, and doesn't store them", async () => {
+    const { status, body } = await postJson<{ id: string }>(
+      "/api/saved-briefs",
+      { brief: `${RUN} unknown keys`, filters: { skills: ["Go"], colour: ["blue"], limit: 5 } },
+      token,
+    );
+    expect(status).toBe(201);
+
+    const list = await api<{ saved_briefs: SavedBrief[] }>("/api/saved-briefs", token);
+    expect(list.body.saved_briefs.find((s) => s.id === body.id)?.filters).toEqual({ skills: ["Go"] });
+    await remove(`/api/saved-briefs/${body.id}`, token);
+  });
+
   // The other invalid inputs are unit tests (savedBriefs.test.ts, filterSchema.test.ts).
   it.each([
     ["missing filters", { brief: "x" }],
+    ["filters that aren't an object", { brief: "x", filters: ["Go"] }],
     ["an empty brief", { brief: "  ", filters: {} }],
   ])("rejects %s with a 400", async (_case, body) => {
     const { status, body: error } = await postJson<ApiErrorBody>("/api/saved-briefs", body, token);

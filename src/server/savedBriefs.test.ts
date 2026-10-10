@@ -72,10 +72,60 @@ describe("saved searches", () => {
     });
   });
 
+  it("drops keys it doesn't know and saves the rest", async () => {
+    const { query } = fakeDb({ data: { id: SAVED }, error: null });
+    await expect(
+      saveBrief(recruiter, { brief: "go", filters: { skills: ["Go"], colour: ["blue"], limit: 5 } }),
+    ).resolves.toEqual({ id: SAVED });
+    expect(query.insert).toHaveBeenCalledWith({ company_id: "c1", brief: "go", filters: { skills: ["Go"] } });
+  });
+
+  it("keeps every key a search understands", async () => {
+    const { query } = fakeDb({ data: { id: SAVED }, error: null });
+    const filters = {
+      roles: ["Backend Engineer"],
+      seniorities: ["senior"],
+      cities: ["Austin"],
+      states: ["TX"],
+      skills: ["Go"],
+      worked_at_companies: ["Copperline"],
+      worked_at_company_types: ["startup"],
+      schools: ["MIT"],
+      degrees: ["BSc"],
+      fields_of_study: ["Physics"],
+      open_to_work: true,
+      min_years: 2,
+      max_years: 9,
+    };
+    jest.mocked(getVocabulary).mockResolvedValue({
+      roles: filters.roles,
+      seniorities: filters.seniorities,
+      cities: filters.cities,
+      states: filters.states,
+      skills: filters.skills,
+      companies: filters.worked_at_companies,
+      company_types: filters.worked_at_company_types,
+      schools: filters.schools,
+      degrees: filters.degrees,
+      fields_of_study: filters.fields_of_study,
+      years_experience: { min: 0, max: 15 },
+    });
+    await saveBrief(recruiter, { brief: "go", filters });
+    expect(query.insert).toHaveBeenCalledWith({ company_id: "c1", brief: "go", filters });
+  });
+
   it.each([
-    ["missing filters", undefined],
+    ["missing", undefined],
+    ["a string", "skills"],
+    ["an array", [{ skills: ["Go"] }]],
+    ["null", null],
+  ])("the body needs filters to be an object: %s is rejected", (_case, filters) => {
+    expect(SavedBriefBody.safeParse({ brief: "go", filters }).success).toBe(false);
+  });
+
+  it.each([
     ["an unknown value", { skills: ["Cobol"] }],
-    ["an unknown field", { colour: ["blue"] }],
+    ["an unknown value next to an unknown key", { skills: ["Cobol"], colour: ["blue"] }],
     ["min_years over max_years", { min_years: 9, max_years: 2 }],
   ])("rejects %s before touching the database", async (_case, filters) => {
     const { from } = fakeDb();
