@@ -20,6 +20,11 @@ export function logError(requestId: string, error: unknown): void {
   console.error(JSON.stringify({ type: "error", request_id: requestId, ...detail }));
 }
 
+// Why a webhook signature was rejected. The caller only sees 400 invalid_signature.
+export function logSignatureRejected(requestId: string, reason: string): void {
+  console.warn(JSON.stringify({ type: "signature_rejected", request_id: requestId, reason }));
+}
+
 export type SearchLog = {
   request_id: string;
   search_id: string;

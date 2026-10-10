@@ -121,7 +121,7 @@ Branch `s7-billing`. FR7. LLD 5.
 - **Tests:** unit tests for signature parsing and HMAC; integration test replaying the samples plus bad signature, repeat, out of order, same-second tie, unknown company and unrelated type.
 - **Commits:**
   - `feat(billing): verify Stripe signatures on the raw body`
-  - `feat(billing): apply subscription events idempotently and in order`
+  - `feat(billing): apply subscription events idempotently and in order` (+ `npm run replay:stripe`)
   - `feat(ui): add upgrade dialog`
   - `test(billing): replay sample events and edge cases`
 

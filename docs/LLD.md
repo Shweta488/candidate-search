@@ -581,7 +581,7 @@ Concurrent `spend_search_credit` calls for one company queue on the row lock; ea
 
 ### 4.7 Webhook route
 
-`POST /api/billing/events` does not use `withRecruiter`:
+`POST /api/billing/events` does not use `withRecruiter`; `withRequestLog` gives it the same error handling and request log, with no company:
 
 1. Read the raw body with `await request.text()`.
 2. Verify the `Stripe-Signature` header against the raw body. Failure: `400 invalid_signature`.
@@ -887,7 +887,7 @@ src/
     env.ts                      validated server environment variables (9)
     supabase.ts                 serverClient, recruiterClient (4.1)
     auth.ts                     requireRecruiter (4.2)
-    http.ts                     withRecruiter, readJson, parseParams, json (4.3)
+    http.ts                     withRecruiter, withRequestLog, readJson, readRawBody, parseParams, json (4.3)
     errors.ts                   AppError, toErrorResponse (4.4)
     log.ts                      request and search log lines
     plan.ts                     spendSearchCredit, refundSearchCredit, getPlan
@@ -927,6 +927,7 @@ scripts/
   write-env.ts                  (7.5)
   package.json                  {"type": "module"} so Node runs the scripts as ES modules
   eval-search.ts                npm run eval:search
+  replay-stripe-events.ts       npm run replay:stripe: sends data/stripe-events.json to the running app
 
 tests/
   integration/                  npm run test:integration: tenancy, quota, billing, hostile, latency

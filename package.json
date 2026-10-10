@@ -15,7 +15,8 @@
     "test:integration": "jest --config jest.integration.config.ts --runInBand",
     "e2e": "env -u ELECTRON_RUN_AS_NODE cypress run",
     "e2e:open": "env -u ELECTRON_RUN_AS_NODE cypress open",
-    "eval:search": "node scripts/eval-search.ts"
+    "eval:search": "node scripts/eval-search.ts",
+    "replay:stripe": "node scripts/replay-stripe-events.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.128.0",

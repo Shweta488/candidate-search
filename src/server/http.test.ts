@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { requireRecruiter } from "./auth";
 import { AppError } from "./errors";
-import { json, parseParams, readJson, withRecruiter } from "./http";
+import { json, parseParams, readJson, readRawBody, withRecruiter, withRequestLog } from "./http";
 
 jest.mock("./auth", () => ({ requireRecruiter: jest.fn() }));
 
@@ -66,6 +66,43 @@ describe("readJson", () => {
 
   it("lets the schema reject a wrong shape", async () => {
     await expect(readJson(post('{"brief":3}'), schema)).rejects.toBeInstanceOf(z.ZodError);
+  });
+});
+
+describe("readRawBody", () => {
+  it("returns the body text unchanged, spacing included", async () => {
+    const body = '{"id": "evt_1",  "x": 1}';
+    await expect(readRawBody(new Request("http://localhost/", { method: "POST", body }))).resolves.toBe(body);
+  });
+
+  it("rejects a body over 16 KB", async () => {
+    const request = new Request("http://localhost/", { method: "POST", body: "x".repeat(16 * 1024 + 1) });
+    await expect(readRawBody(request)).rejects.toMatchObject({ code: "invalid_request" });
+  });
+});
+
+describe("withRequestLog", () => {
+  beforeEach(() => {
+    jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it("logs one line with no company", async () => {
+    const response = await withRequestLog(async () => json({ outcome: "applied" }))(
+      new Request("http://localhost/api/billing/events", { method: "POST" }),
+    );
+    expect(response.status).toBe(200);
+    const line = JSON.parse(jest.mocked(console.log).mock.calls[0][0] as string);
+    expect(line).toMatchObject({ route: "/api/billing/events", status: 200, company_id: null });
+  });
+
+  it("maps errors the same way as recruiter routes", async () => {
+    const response = await withRequestLog(async () => {
+      throw new AppError("invalid_signature", "The Stripe signature is not valid.");
+    })(new Request("http://localhost/api/billing/events", { method: "POST" }));
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.code).toBe("invalid_signature");
   });
 });
 
