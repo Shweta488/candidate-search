@@ -149,7 +149,7 @@ Re-running a saved search is `POST /api/search` with its `brief` and `filters`.
 
 ### 1.7 Plan, vocabulary, billing
 
-**`GET /api/plan`** returns `200 { "plan": "free" | "paid", "searches_remaining": number | null }`.
+**`GET /api/plan`** returns `200 { "plan": "free" | "paid", "searches_remaining": number | null, "company_name": string }`. The company is the signed-in recruiter's; its name is shown in the header and the Upgrade dialog.
 
 **`GET /api/vocabulary`** returns the allowed values for the filter editor:
 
@@ -326,7 +326,7 @@ All in `private`, `security invoker`, `set search_path = ''` with fully qualifie
 | `spend_search_credit(p_company_id uuid)` | `searches_remaining int` (null when paid), or no row when the limit is reached | the one conditional `UPDATE` | 4 |
 | `refund_search_credit(p_company_id uuid)` | `void` | `searches_used = greatest(searches_used - 1, 0)` | 4 |
 | `is_paid(p_company_id uuid)` | `boolean` | true if any subscription is `active` or `trialing` | 4 |
-| `get_plan(p_company_id uuid)` | `plan text, searches_remaining int` | plan and searches left for `/api/plan` | 4 |
+| `get_plan(p_company_id uuid)` | `plan text, searches_remaining int, company_name text` | plan, searches left and company name for `/api/plan` | 4 |
 | `get_vocabulary()` | `jsonb` | distinct values per filter field, used for the LLM tool schema, zod and `/api/vocabulary` | 3 |
 | `run_search(p_company_id uuid, p_brief text, p_filters ..., p_unsupported text[])` | `search_id uuid, total int` | filter, rank, store all matches in `search_results` in one transaction | 3 |
 | `get_search_page(p_company_id uuid, p_search_id uuid, p_page int)` | `jsonb`: the search (`brief`, `filters`, `unsupported`, `total`) and that page's `CandidateSummary` results | page read, scoped to the company; `null` means `404` | 3 |
@@ -349,6 +349,8 @@ Supabase CLI names, one file per plan commit:
 | `…_shortlists.sql` (with RLS) | S5 |
 | `…_saved_briefs.sql` (with RLS) | S6 |
 | `…_stripe_events.sql` (`apply_stripe_event`) | S7 |
+| `…_rank_closer_matches.sql` (`run_search` ranking, 3.6) | S8 |
+| `…_plan_company_name.sql` (`get_plan` returns `company_name`) | S8 |
 
 Applied migrations are never edited after they are pushed (RULES.md section 3); changes go in a new file.
 
@@ -574,7 +576,8 @@ where id = p_company_id;
 -- private.get_plan
 select case when private.is_paid(id) then 'paid' else 'free' end as plan,
        case when private.is_paid(id) then null
-            else greatest(1 - searches_used, 0) end as searches_remaining
+            else greatest(1 - searches_used, 0) end as searches_remaining,
+       name as company_name
 from private.companies where id = p_company_id;
 ```
 

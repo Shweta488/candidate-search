@@ -12,8 +12,11 @@ function fakeRpc(result: { data: unknown; error: unknown }) {
 
 describe("getPlan", () => {
   it("calls private.get_plan for the company and returns its row", async () => {
-    const { schema, rpc } = fakeRpc({ data: { plan: "free", searches_remaining: 1 }, error: null });
-    await expect(getPlan("c1")).resolves.toEqual({ plan: "free", searches_remaining: 1 });
+    const { schema, rpc } = fakeRpc({
+      data: { plan: "free", searches_remaining: 1, company_name: "Acme" },
+      error: null,
+    });
+    await expect(getPlan("c1")).resolves.toEqual({ plan: "free", searches_remaining: 1, company_name: "Acme" });
     expect(schema).toHaveBeenCalledWith("private");
     expect(rpc).toHaveBeenCalledWith("get_plan", { p_company_id: "c1" });
   });

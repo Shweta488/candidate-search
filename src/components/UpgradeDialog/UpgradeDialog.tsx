@@ -15,7 +15,8 @@ export function UpgradeDialog({ open, onClose }: { open: boolean; onClose: () =>
   const heading = useRef<HTMLHeadingElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const titleId = useId();
-  const { reload } = usePlan();
+  const { plan, reload } = usePlan();
+  const account = plan ? `${possessive(plan.company_name)} billing account` : "your company's billing account";
 
   useEffect(() => {
     const element = dialog.current;
@@ -61,8 +62,8 @@ export function UpgradeDialog({ open, onClose }: { open: boolean; onClose: () =>
         </h2>
         <p className={styles.text}>The free plan includes 1 search. The paid plan has unlimited searches.</p>
         <p className={styles.text}>
-          Upgrades are handled through your company&apos;s billing account, not here. As soon as your subscription
-          starts, you&apos;ll get unlimited searches. If it ends, you&apos;ll go back to the free plan.
+          Upgrades are handled through {account}, not here. As soon as your subscription starts, you&apos;ll get
+          unlimited searches. If it ends, you&apos;ll go back to the free plan.
         </p>
         <p className={styles.text}>Your shortlists and saved searches stay with you on either plan.</p>
         <div className={styles.actions}>
@@ -73,6 +74,11 @@ export function UpgradeDialog({ open, onClose }: { open: boolean; onClose: () =>
       </div>
     </dialog>
   );
+}
+
+// "Acme's", or "Atlas'" for a name ending in s.
+function possessive(name: string): string {
+  return name.endsWith("s") ? `${name}'` : `${name}'s`;
 }
 
 // An Upgrade button that opens the dialog, for the places that tell the recruiter

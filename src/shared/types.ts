@@ -12,7 +12,7 @@ export type ErrorCode =
 
 export type ApiErrorBody = { error: { code: ErrorCode; message: string } };
 
-export type PlanResponse = { plan: "free" | "paid"; searches_remaining: number | null };
+export type PlanResponse = { plan: "free" | "paid"; searches_remaining: number | null; company_name: string };
 
 // Search filters (LLD 3.1). Every field is optional; an omitted field means no constraint.
 // Values inside a list are OR-ed, except skills, which must all be present.

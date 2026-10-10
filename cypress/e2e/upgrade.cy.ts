@@ -2,9 +2,9 @@
 // so this spec never calls the LLM, never spends a search and never changes billing.
 import { checkAccessibility, signIn, VIEWPORTS } from "../support/helpers";
 
-const FREE = { plan: "free", searches_remaining: 1 };
-const USED_UP = { plan: "free", searches_remaining: 0 };
-const PAID = { plan: "paid", searches_remaining: null };
+const FREE = { plan: "free", searches_remaining: 1, company_name: "Acme" };
+const USED_UP = { plan: "free", searches_remaining: 0, company_name: "Acme" };
+const PAID = { plan: "paid", searches_remaining: null, company_name: "Acme" };
 
 function visitSearch(plan: object) {
   cy.intercept("GET", "/api/plan", { statusCode: 200, body: plan }).as("plan");
@@ -25,6 +25,7 @@ for (const viewport of VIEWPORTS) {
       cy.get("dialog[open]").should("be.visible");
       cy.contains("h2", "Upgrade to the paid plan").should("have.focus");
       cy.contains("dialog", "The paid plan has unlimited searches.").should("be.visible");
+      cy.contains("dialog", "Upgrades are handled through Acme's billing account, not here.").should("be.visible");
       checkAccessibility();
 
       cy.focused().type("{esc}");
@@ -57,6 +58,17 @@ for (const viewport of VIEWPORTS) {
       cy.contains("dialog[open] h2", "Upgrade to the paid plan").should("be.visible");
       cy.contains("dialog button", "Close").click();
       cy.contains("button", "Upgrade").should("have.focus");
+    });
+
+    it("shows the company name in the header, or in the menu on a phone", () => {
+      visitSearch(FREE);
+      if (viewport.name === "desktop") {
+        cy.get("header").contains("Acme").should("be.visible");
+      } else {
+        cy.contains("header span", "Acme").should("not.be.visible"); // hidden; shown in the menu instead
+        cy.get('button[aria-label="Menu"]').click();
+        cy.get("#phone-menu").contains("Acme").should("be.visible");
+      }
     });
 
     it("shows the paid plan as plain text, with nothing to open", () => {
