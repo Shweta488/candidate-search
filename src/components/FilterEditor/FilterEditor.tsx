@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { EDITOR_LABELS, FIELD_ORDER, FIELDS, type FilterField, type FilterValue } from "@/client/filterDraft";
+import {
+  EDITOR_LABELS,
+  FIELD_ORDER,
+  FIELDS,
+  type FilterField,
+  type FilterValue,
+  valueLabel,
+} from "@/client/filterDraft";
 import { useVocabulary } from "@/client/vocabulary";
 import { Button } from "../Button/Button";
 import styles from "./FilterEditor.module.css";
@@ -159,7 +166,7 @@ export function FilterEditor({ editing, onSave, onCancel }: Props) {
                 <option value="">Choose…</option>
                 {options.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {valueLabel(field, option)}
                   </option>
                 ))}
               </select>

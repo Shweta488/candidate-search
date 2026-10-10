@@ -15,6 +15,22 @@ for (const viewport of VIEWPORTS) {
       cy.title().should("eq", "Search · Candidate Search");
     });
 
+    it("opens Search after signing out on another page and signing in as someone else", () => {
+      cy.visit("/sign-in");
+      signIn("recruiter@acme.test");
+      cy.contains("h1", "Find candidates").should("be.visible");
+      cy.visit("/saved-searches");
+      cy.contains("h1", "Saved searches").should("be.visible");
+
+      if (viewport.name === "phone") cy.get("button[aria-label=Menu]").click();
+      cy.contains("button:visible", "Sign out").click();
+      cy.location("pathname").should("eq", "/sign-in");
+      cy.location("search").should("eq", ""); // no way back to the page that was left
+
+      signIn("recruiter@globex.test");
+      cy.location("pathname").should("eq", "/search");
+    });
+
     it("shows a clear error for a wrong password and stays on sign-in", () => {
       cy.visit("/sign-in");
       signIn("recruiter@acme.test", "wrong-password");

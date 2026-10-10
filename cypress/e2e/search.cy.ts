@@ -20,10 +20,10 @@ for (const viewport of VIEWPORTS) {
       cy.contains("button", "Search").click();
 
       cy.contains("h2", "21 candidates", { timeout: 10_000 }).should("be.visible");
-      cy.contains("li", "Seniority: senior").should("be.visible");
+      cy.contains("li", "Seniority: Senior").should("be.visible");
       cy.contains("li", "Skill: React").should("be.visible");
       cy.contains("li", "City: New York").should("be.visible");
-      cy.contains("li", "Worked at: startup").should("be.visible");
+      cy.contains("li", "Worked at: Startup").should("be.visible");
       cy.get("article").should("have.length", 20);
       cy.get("header")
         .contains(viewport.name === "desktop" ? "0 searches left" : "0 left")

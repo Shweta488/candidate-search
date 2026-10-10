@@ -5,8 +5,9 @@ import { Avatar } from "../Avatar/Avatar";
 import { OpenToWork } from "../OpenToWork/OpenToWork";
 import styles from "./CandidateCard.module.css";
 
-// One search result or list member. The name opens the candidate page; skills the
-// search asked for are highlighted; `action` is a button such as Add to list or Remove.
+// One search result or list member. Clicking anywhere on the card opens the candidate
+// page (the name is the link); skills the search asked for are highlighted; `action` is a
+// button such as Add to list or Remove, which stays clickable on top.
 export function CandidateCard({
   candidate,
   matchedSkills = [],
@@ -20,7 +21,7 @@ export function CandidateCard({
 }) {
   const c = candidate;
   return (
-    <article className={styles.card}>
+    <article className={`${styles.card} ${styles.clickable}`}>
       <Avatar src={c.avatar_url} name={c.full_name} className={styles.avatar} />
       <div className={styles.top}>
         <h3 className={styles.name}>

@@ -33,6 +33,7 @@ function page(overrides: Record<string, unknown> = {}) {
         years_experience: 9,
         open_to_work: true,
         skills: ["React"],
+        shortlist_ids: [],
       },
     ],
     searches_remaining: 0,
@@ -92,14 +93,14 @@ for (const viewport of VIEWPORTS) {
       });
       cy.contains("li", "City: Austin").should("be.visible");
 
-      cy.get("button[aria-label='Change Seniority: senior']").click();
+      cy.get("button[aria-label='Change Seniority: Senior']").click();
       cy.get("form[aria-label='Change filter']").within(() => {
         cy.contains("Filter on").should("not.exist");
         cy.contains("label", "Seniority").should("be.visible");
         cy.get("select").should("have.length", 1).select("staff");
         cy.contains("button", "Change").click();
       });
-      cy.contains("li", "Seniority: staff").should("be.visible");
+      cy.contains("li", "Seniority: Staff").should("be.visible");
 
       expectRun({ seniorities: ["staff"], skills: ["React"], cities: ["New York", "Austin"] });
     });

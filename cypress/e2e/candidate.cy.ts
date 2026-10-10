@@ -31,6 +31,7 @@ function page2() {
         years_experience: 4,
         open_to_work: false,
         skills: ["Ansible", "Docker"],
+        shortlist_ids: [],
       },
     ],
   };
@@ -71,6 +72,22 @@ for (const viewport of VIEWPORTS) {
       cy.location("pathname").should("eq", "/search");
       cy.location("search").should("eq", `?id=${SEARCH_ID}&page=2`);
       cy.contains("Page 2 of 2").should("be.visible");
+    });
+
+    it("opens the candidate from anywhere on the card, but not from Add to list", () => {
+      cy.intercept("GET", `/api/search/${SEARCH_ID}?page=2`, { body: page2() }).as("page2");
+      cy.visit(RESULTS);
+      cy.wait("@page2");
+
+      cy.get("button[aria-label='Add Amara Cohen to a list']").click();
+      cy.contains("button", "+ New list").should("be.visible");
+      cy.location("pathname").should("eq", "/search");
+      cy.focused().type("{esc}");
+
+      // A real click, beside the text: Cypress's own click goes to the card element, not to
+      // whatever is on top at that point, so it would miss the stretched link.
+      cy.contains("article", "Amara Cohen").realClick({ x: 30, y: 30 }); // on the avatar, not the name
+      cy.location("pathname").should("eq", "/people/cand_0001");
     });
 
     it("goes to the search page when opened directly, and ignores a back link to another site", () => {
