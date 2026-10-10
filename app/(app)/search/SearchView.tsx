@@ -15,6 +15,7 @@ import { FilterTags } from "@/components/FilterTags/FilterTags";
 import { PageHeading } from "@/components/PageHeading/PageHeading";
 import { Pager } from "@/components/Pager/Pager";
 import { StatePanel } from "@/components/StatePanel/StatePanel";
+import { UpgradeButton } from "@/components/UpgradeDialog/UpgradeDialog";
 import type { Filters, PlanResponse, SearchPage, SearchResponse } from "@/shared/types";
 import styles from "./search.module.css";
 
@@ -372,7 +373,7 @@ function candidateHref(candidateId: string, page: SearchPage): string {
 function SearchFailed({ error, onRetry }: { error: ApiError; onRetry: () => void }) {
   if (error.code === "search_limit_reached") {
     return (
-      <StatePanel tone="limit" title="You've used your free search.">
+      <StatePanel tone="limit" title="You've used your free search." action={<UpgradeButton />}>
         You can still page through the searches you&apos;ve already run.
       </StatePanel>
     );

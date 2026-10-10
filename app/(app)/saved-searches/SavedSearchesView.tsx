@@ -11,6 +11,7 @@ import { Button } from "@/components/Button/Button";
 import { FilterTags } from "@/components/FilterTags/FilterTags";
 import { PageHeading } from "@/components/PageHeading/PageHeading";
 import { StatePanel } from "@/components/StatePanel/StatePanel";
+import { UpgradeButton } from "@/components/UpgradeDialog/UpgradeDialog";
 import type { PlanResponse, SavedBrief, SearchResponse } from "@/shared/types";
 import styles from "./saved-searches.module.css";
 
@@ -145,6 +146,7 @@ function ConfirmRun(props: { plan: PlanResponse | undefined; onRun: () => void; 
             : "Running this is a new search."}
       </p>
       <div className={styles.actions}>
+        {usedUp && <UpgradeButton size="sm" />}
         {!usedUp && (
           <Button size="sm" onClick={props.onRun}>
             Run search
@@ -213,8 +215,11 @@ function RunFailed({ error }: { error: ApiError }) {
           ? "This saved search no longer works. Delete it and save a new one."
           : "Something went wrong. Try again.";
   return (
-    <p className={styles.error} role="alert">
-      {message}
-    </p>
+    <div className={styles.failed}>
+      <p className={styles.error} role="alert">
+        {message}
+      </p>
+      {error.code === "search_limit_reached" && <UpgradeButton size="sm" />}
+    </div>
   );
 }

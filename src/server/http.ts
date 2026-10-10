@@ -38,6 +38,30 @@ export function withRecruiter<P extends Params = Record<string, never>>(
   };
 }
 
+// For routes called without a recruiter token (the Stripe webhook): the same error
+// handling and request log as withRecruiter, with no company.
+export function withRequestLog(handler: (request: Request, requestId: string) => Promise<Response>) {
+  return async (request: Request): Promise<Response> => {
+    const requestId = crypto.randomUUID();
+    const started = performance.now();
+    let response: Response;
+    try {
+      response = await handler(request, requestId);
+    } catch (error) {
+      response = toErrorResponse(error, requestId);
+    }
+    logRequest({
+      request_id: requestId,
+      method: request.method,
+      route: new URL(request.url).pathname,
+      status: response.status,
+      ms: Math.round(performance.now() - started),
+      company_id: null,
+    });
+    return response;
+  };
+}
+
 export function json(data: unknown, status = 200): Response {
   return Response.json(data, { status });
 }
@@ -51,18 +75,25 @@ const MAX_BODY_BYTES = 16 * 1024; // LLD 1.1
 // Reads a JSON body: rejects bodies over 16 KB and anything that isn't JSON, then
 // validates with the schema (a ZodError becomes a 400 naming the field).
 export async function readJson<S extends z.ZodType>(request: Request, schema: S): Promise<z.infer<S>> {
+  return schema.parse(parseJsonText(await readRawBody(request)));
+}
+
+// The body as text, exactly as sent, up to 16 KB. The Stripe webhook needs the raw text
+// because the signature covers those exact bytes (LLD 4.7).
+export async function readRawBody(request: Request): Promise<string> {
   const declared = Number(request.headers.get("content-length") ?? 0);
   if (declared > MAX_BODY_BYTES) throw tooLarge();
   const text = await request.text();
   if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) throw tooLarge();
+  return text;
+}
 
-  let body: unknown;
+export function parseJsonText(text: string): unknown {
   try {
-    body = JSON.parse(text);
+    return JSON.parse(text);
   } catch {
     throw new AppError("invalid_request", "The request body must be JSON.");
   }
-  return schema.parse(body);
 }
 
 // Validates path params or query values with the schema, the same way as a body.
