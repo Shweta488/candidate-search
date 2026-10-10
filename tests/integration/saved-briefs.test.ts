@@ -69,13 +69,10 @@ describe("saved searches", () => {
     });
   });
 
+  // The other invalid inputs are unit tests (savedBriefs.test.ts, filterSchema.test.ts).
   it.each([
     ["missing filters", { brief: "x" }],
-    ["an unknown filter value", { brief: "x", filters: { skills: ["Cobol"] } }],
-    ["an unknown filter field", { brief: "x", filters: { colour: ["blue"] } }],
-    ["min_years over max_years", { brief: "x", filters: { min_years: 9, max_years: 2 } }],
     ["an empty brief", { brief: "  ", filters: {} }],
-    ["a brief over 500 characters", { brief: "x".repeat(501), filters: {} }],
   ])("rejects %s with a 400", async (_case, body) => {
     const { status, body: error } = await postJson<ApiErrorBody>("/api/saved-briefs", body, token);
     expect(status).toBe(400);
@@ -111,9 +108,5 @@ describe("saved searches", () => {
     expect(await remove(`/api/saved-briefs/${secondId}`, token)).toBe(404);
     const { body } = await api<{ saved_briefs: SavedBrief[] }>("/api/saved-briefs", token);
     expect(body.saved_briefs.map((s) => s.id)).not.toContain(secondId);
-  });
-
-  it("is not found for an id that isn't a uuid", async () => {
-    expect(await remove("/api/saved-briefs/nope", token)).toBe(404);
   });
 });

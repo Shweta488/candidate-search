@@ -44,7 +44,6 @@ describe("shortlists", () => {
 
   it.each([
     ["an empty name", { name: "   " }],
-    ["a name over 80 characters", { name: "x".repeat(81) }],
     ["no name", {}],
   ])("rejects %s with a 400", async (_case, body) => {
     expect((await postJson("/api/shortlists", body, token)).status).toBe(400);

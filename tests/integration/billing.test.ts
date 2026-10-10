@@ -39,9 +39,9 @@ async function send(
   return { status: response.status, body: await response.json() };
 }
 
-function sign(rawBody: string, secret = SECRET): string {
+function sign(rawBody: string): string {
   const t = Math.floor(Date.now() / 1000);
-  return `t=${t},v1=${createHmac("sha256", secret).update(`${t}.${rawBody}`).digest("hex")}`;
+  return `t=${t},v1=${createHmac("sha256", SECRET).update(`${t}.${rawBody}`).digest("hex")}`;
 }
 
 // A subscription event with ids unique to this run, so cleanup can find it.
@@ -169,15 +169,11 @@ describe("Stripe webhook", () => {
       expect(response.body.error.code).toBe("invalid_signature");
     });
 
-    it("rejects a signature made with another secret", async () => {
-      const response = await send(body(), sign(body(), "whsec_wrong"));
+    // Wrong secrets and malformed headers are unit tests (verifySignature.test.ts).
+    it("rejects a missing header", async () => {
+      const response = await send(body(), null);
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe("invalid_signature");
-    });
-
-    it("rejects a missing or malformed header", async () => {
-      expect((await send(body(), null)).body.error.code).toBe("invalid_signature");
-      expect((await send(body(), "v1=abc")).body.error.code).toBe("invalid_signature");
     });
 
     it("changes nothing when the signature fails", async () => {

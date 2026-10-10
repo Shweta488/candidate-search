@@ -39,8 +39,9 @@ for (const viewport of VIEWPORTS) {
       cy.intercept("GET", "/api/plan", { statusCode: 200, body: PAID }).as("planAfter");
       cy.contains("dialog button", "Close").click();
 
+      // On the paid plan the pill is plain text, with nothing to open.
       cy.wait("@planAfter");
-      cy.contains("Paid plan").should("be.visible");
+      cy.contains("span", "Paid plan").should("be.visible");
       cy.get("button[aria-haspopup=dialog]").should("not.exist");
     });
 
@@ -69,12 +70,6 @@ for (const viewport of VIEWPORTS) {
         cy.get('button[aria-label="Menu"]').click();
         cy.get("#phone-menu").contains("Acme").should("be.visible");
       }
-    });
-
-    it("shows the paid plan as plain text, with nothing to open", () => {
-      visitSearch(PAID);
-      cy.contains("span", "Paid plan").should("be.visible");
-      cy.get("button[aria-haspopup=dialog]").should("not.exist");
     });
   });
 }
