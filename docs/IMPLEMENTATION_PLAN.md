@@ -156,6 +156,7 @@ Branch `s12-submission-fixes`. NFR5, NFR6, FR4, FR5. LLD 1.1, 1.5, 1.6, 3.3, 5.3
   - `docs: align the LLD, architecture and testing docs with the code`
   - `test: remove tests that repeat other tests`
   - `fix(ui): keep a way back to results when the limit is reached`
+  - `style(ui): open a shortlist from anywhere on its tile`
 
 ## Risks
 

@@ -693,7 +693,7 @@ How the browser side is built, and the visual rules every screen follows (6.7).
 | `/search` | `app/(app)/search/page.tsx` | the start page: empty brief box, then the newest saved searches and shortlists, or example briefs |
 | `/search?id={search_id}&page={n}` | same page | loads that search with `GET /api/search/{id}`; refresh and back keep the results |
 | `/people/{id}` | `app/(app)/people/[id]/page.tsx` | |
-| `/shortlists` | `app/(app)/shortlists/page.tsx` | |
+| `/shortlists` | `app/(app)/shortlists/page.tsx` | one tile per list; the whole tile opens the list |
 | `/shortlists/{id}` | `app/(app)/shortlists/[id]/page.tsx` | |
 | `/saved-searches` | `app/(app)/saved-searches/page.tsx` | |
 

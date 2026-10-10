@@ -187,7 +187,8 @@ for (const viewport of VIEWPORTS) {
       cy.contains("[role=status]", "Added to Backend").should("be.visible");
 
       cy.visit("/shortlists");
-      cy.contains("li", "Backend").should("contain", "1 person").find("a").click();
+      // The whole tile opens the list, also a click in its padding, left of the name.
+      cy.contains("li", "Backend").should("contain", "1 person").click(8, 30);
       cy.title().should("eq", "Backend · Candidate Search");
       cy.get("article").should("have.length", 1).and("contain", "Mei Haddad");
       checkAccessibility();
