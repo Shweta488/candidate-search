@@ -131,9 +131,12 @@ Branch `s8-hardening`.
 - **Done when:** latency targets are met, the bundle scan passes, every screen passes the accessibility check, and the README is final, with screenshots of the app and a setup troubleshooting note (for example Docker out of disk space).
 - **Tests:** latency integration test; `check:secrets`; `cy.checkA11y()` on every screen at desktop and phone width.
 - **Commits:**
+  - `feat(search): map umbrella job titles to engineering roles` (+ extra eval briefs)
+  - `feat(search): rank closer matches first`
   - `perf(search): tune prompt and timeouts against latency budget`
   - `test(perf): add latency integration test`
   - `test(security): add built-bundle secret scan`
+  - `feat(ui): show the company name in the header and Upgrade dialog`
   - `style(ui): polish mobile layout and accessibility`
   - `docs: finalise README with screenshots, cost, tradeoffs and next steps`
 

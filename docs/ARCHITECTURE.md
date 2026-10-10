@@ -35,7 +35,7 @@ and the system should:
 | NFR8 | be reproducible | `make setup` and `make dev` work on a clean Mac |
 | NFR9 | work on desktop and phone, accessibly | WCAG 2.1 AA basics: keyboard, focus, contrast, labels |
 
-**Scale.** 5,000 candidates, 2 companies, 1 recruiter each. At this size a single Postgres with no cache layer is enough. At real scale the same filter approach holds, with composite indexes, capped stored results, filters cached per normalised brief, and webhooks processed from a queue.
+**Scale.** 5,000 candidates, 2 companies, 1 recruiter each. At this size a single Postgres with no cache layer is enough. At real scale the same filter approach holds, with composite indexes, capped stored results, filters cached per normalised brief, and webhooks processed from a queue. Keyword or embedding search would only be added for free-text profiles (resumes, bios) that no structured field covers, and alongside the filters, not instead of them.
 
 ### 1.3 Out of scope
 
@@ -167,7 +167,7 @@ Paging is a primary-key read. A new search uses Haiku with a cached prompt, shor
 
 | Decision | Alternative | Why |
 |---|---|---|
-| Enum-constrained filters, empty result on unsupported asks | Full-text or embedding search | The data is structured and the answer key is exact sets; fuzzy search would add wrong people |
+| Enum-constrained filters, empty result on unsupported asks | Full-text or embedding search | The data is structured and the answer key is exact sets; fuzzy search would add wrong people and break "return nobody". The free text (headlines, job descriptions) is generated from the structured fields, so it adds nothing to match on |
 | Store ranked ids per search | Re-run the query per page | Fast, stable paging, every result exactly once |
 | Quota in one conditional `UPDATE` | App-level lock | Atomic in the database, works across processes |
 | Spend the search credit before the LLM, give it back on failure | Count after success | Correct under concurrency; users don't lose a search to our outage |
