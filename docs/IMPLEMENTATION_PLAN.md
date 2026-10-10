@@ -153,6 +153,8 @@ Branch `s12-submission-fixes`. NFR5, NFR6, FR4, FR5. LLD 1.1, 1.5, 1.6, 3.3, 5.3
   - `fix(api): allow shortlists with the same name`
   - `fix(api): ignore unknown keys when saving a search`
   - `docs: cut README to one page and move review notes to docs/REVIEWING.md`
+  - `docs: align the LLD, architecture and testing docs with the code`
+  - `test: remove tests that repeat other tests`
 
 ## Risks
 

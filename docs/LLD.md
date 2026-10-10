@@ -352,6 +352,7 @@ Supabase CLI names, one file per plan commit:
 | `…_stripe_events.sql` (`apply_stripe_event`) | S7 |
 | `…_rank_closer_matches.sql` (`run_search` ranking, 3.6) | S8 |
 | `…_plan_company_name.sql` (`get_plan` returns `company_name`) | S8 |
+| `…_allow_duplicate_shortlist_names.sql` (drops the unique name index, adds the listing index) | S12 |
 
 Applied migrations are never edited after they are pushed (RULES.md section 3); changes go in a new file.
 
@@ -418,6 +419,8 @@ Two paths, one zod `Filters` schema built from the vocabulary:
 |---|---|
 | LLM output | moved into `unsupported` (so the search returns nobody, 3.5) |
 | `filters` sent by the client (correction, saved search) | `400 invalid_request`, before any credit is spent |
+
+A filter key that doesn't exist is a `400` on `POST /api/search`. `POST /api/saved-briefs` leaves such keys out and stores the rest (1.6).
 
 Empty lists are removed, so `{ skills: [] }` means no skill filter. `unsupported` is capped at 5 items of 80 characters each.
 
@@ -909,9 +912,9 @@ supabase/                       config.toml (7.3) and migrations/ (2.6)
 scripts/                        seed (7.4), write-env (7.5), eval-search, replay-stripe-events
 tests/integration/              tests against the running app (TESTING.md)
 tests/security/                 built-bundle secret scan
-cypress/e2e/                    end-to-end specs; cypress/tour/ retakes the README screenshots
+cypress/e2e/                    end-to-end specs; cypress/tour/ retakes the screenshots in docs/
 data/                           assessment data and extra-queries.json
-docs/                           ARCHITECTURE, LLD, TESTING, IMPLEMENTATION_PLAN, screenshots/
+docs/                           ARCHITECTURE, LLD, TESTING, REVIEWING, IMPLEMENTATION_PLAN, screenshots/
 ```
 
 ## 9. Environment variables

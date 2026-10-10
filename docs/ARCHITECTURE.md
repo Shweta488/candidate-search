@@ -185,7 +185,7 @@ Every recruiter route takes `Authorization: Bearer <supabase access token>`.
 | `GET /api/vocabulary` | allowed values for the filter editor | 401 |
 | `GET /api/people/:id` | candidate + experiences + education | 401, 404 |
 | `GET` / `POST /api/shortlists` | lists with counts / `{ id }` | 400, 401 |
-| `GET` / `PATCH` / `DELETE /api/shortlists/:id` | members / rename / delete | 401, 404 |
+| `GET` / `PATCH` / `DELETE /api/shortlists/:id` | members / rename / delete | 400 (rename), 401, 404 |
 | `POST` / `DELETE /api/shortlists/:id/people/:personId` | 200 (adding twice changes nothing) | 401, 404 |
 | `GET` / `POST /api/saved-briefs`, `DELETE /api/saved-briefs/:id` | list / `{ id }` / 204 | 400, 401, 404 |
 | `GET /api/plan` | `{ plan: "free" or "paid", searches_remaining: number or null, company_name }` | 401 |
@@ -426,6 +426,9 @@ sequenceDiagram
         API-->>ST: 400 invalid_signature
     else valid
         API->>API: JSON.parse + zod (id, type, created, plus subscription fields for subscription events)
+        alt not JSON, or a field we need is missing
+            API-->>ST: 200 { outcome: ignored }, logged, nothing recorded
+        else readable
         API->>DB: event id, type, created, sub id, status, metadata.company
         DB->>DB: INSERT INTO stripe_events ON CONFLICT (id) DO NOTHING
         alt event id already seen (repeat)
@@ -441,6 +444,7 @@ sequenceDiagram
             end
         end
         API-->>ST: 200 { outcome }
+        end
     end
 
     Note over PL,DB: plan = 'paid' when any subscription of the company<br/>has status active or trialing, else 'free'.<br/>Computed on read, so it can never drift from the events.

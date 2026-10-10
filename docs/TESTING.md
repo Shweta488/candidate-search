@@ -6,7 +6,7 @@ Each grading area gets an automated check that runs against the real local stack
 
 | Level | Tool | Command | Needs | Covers |
 |---|---|---|---|---|
-| Unit | Jest | `npm test` | nothing running | filter schema and sanitising, SQL parameter mapping, signature parsing and HMAC, event ordering rules, page math |
+| Unit | Jest | `npm test` | nothing running | filter schema and sanitising, SQL parameter mapping, signature parsing and HMAC, what the webhook route answers (200, 400, 500), page math |
 | Integration | Jest (separate config) | `npm run test:integration` | `make setup` + `make dev` | tenancy, free-plan concurrency, billing replay, hostile briefs, latency |
 | End-to-end | Cypress + `cypress-axe` | `npm run e2e` | `make setup` + `make dev` | every screen and its states on desktop and phone, accessibility |
 | Search accuracy | TypeScript script | `npm run eval:search` | full stack + model key | precision, recall and page-1 precision per brief |
