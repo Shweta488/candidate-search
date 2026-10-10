@@ -78,3 +78,10 @@
   color: var(--color-danger);
   font-size: var(--text-sm);
 }
+
+.failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}

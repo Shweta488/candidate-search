@@ -11,6 +11,21 @@
   white-space: nowrap;
 }
 
+.button {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.button:hover .upgradeWord {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.upgradeWord {
+  font-weight: 600;
+}
+
 .free {
   background: var(--color-primary-soft);
   color: var(--color-primary);
@@ -40,7 +55,8 @@
     width: 72px; /* the width of "Free · 1 left", so the header stays on one line */
   }
 
-  .long {
+  .long,
+  .upgrade {
     display: none;
   }
 
