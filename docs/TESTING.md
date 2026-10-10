@@ -49,5 +49,6 @@ Kept small, 4 specs, each run at desktop width and at 390 px:
 ## When tests run
 
 - Typecheck, lint and unit tests before every commit approval request, and in CI on every PR.
-- The integration tests and Cypress specs for an area whenever that area changes; all of them before the final push.
+- The integration tests and Cypress specs for an area whenever that area changes, run by file; all of them before the final push.
+- The tests that call Claude (`hostile.test.ts`, `latency.test.ts`, `search.cy.ts`, `npm run eval:search`) once per story, after all of its changes, and only when the story touches the brief-to-filters path (RULES.md section 6).
 - A fresh clone with `make setup && make dev` before the final push.
