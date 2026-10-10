@@ -1,5 +1,6 @@
-// The webhook route itself (app/api/billing/events/route.ts), with only the database faked:
-// which answers are 400, which are 200, and that a database failure is a 500.
+// The webhook route itself (app/api/billing/events/route.ts), with only the database faked,
+// for the answers the integration test (tests/integration/billing.test.ts) can't produce
+// or can't see: a database failure, a body over 1 MB, and the logged reason for "ignored".
 import { createHmac } from "node:crypto";
 import { POST } from "../../../app/api/billing/events/route";
 import { serverClient } from "../supabase";
@@ -19,18 +20,17 @@ function sign(rawBody: string): string {
   return `t=${t},v1=${createHmac("sha256", SECRET).update(`${t}.${rawBody}`).digest("hex")}`;
 }
 
-function post(rawBody: string, signature: string | null = sign(rawBody)): Promise<Response> {
-  const headers: Record<string, string> = signature === null ? {} : { "stripe-signature": signature };
+function post(rawBody: string): Promise<Response> {
+  const headers = { "stripe-signature": sign(rawBody) };
   return POST(new Request("http://localhost/api/billing/events", { method: "POST", headers, body: rawBody }));
 }
 
-function subscriptionEvent(extra: Record<string, unknown> = {}): string {
+function subscriptionEvent(): string {
   return JSON.stringify({
     id: "evt_1",
     type: "customer.subscription.updated",
     created: 100,
     data: { object: { id: "sub_1", status: "active", metadata: { company: "acme" } } },
-    ...extra,
   });
 }
 
@@ -45,32 +45,6 @@ describe("POST /api/billing/events", () => {
     delete process.env.STRIPE_WEBHOOK_SECRET;
     jest.restoreAllMocks();
     jest.mocked(serverClient).mockReset();
-  });
-
-  it("applies a correctly signed event", async () => {
-    const rpc = fakeRpc({ data: "applied", error: null });
-    const response = await post(subscriptionEvent());
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ outcome: "applied" });
-    expect(rpc).toHaveBeenCalledTimes(1);
-  });
-
-  it("applies a signed event larger than the 16 KB allowed on other routes", async () => {
-    fakeRpc({ data: "applied", error: null });
-    const response = await post(subscriptionEvent({ padding: "x".repeat(20 * 1024) }));
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ outcome: "applied" });
-  });
-
-  it.each([
-    ["a missing signature header", subscriptionEvent(), null],
-    ["a signature made for another body", subscriptionEvent(), sign("{}")],
-  ])("answers 400 for %s, without touching the database", async (_case, rawBody, signature) => {
-    const rpc = fakeRpc({ data: "applied", error: null });
-    const response = await post(rawBody, signature);
-    expect(response.status).toBe(400);
-    expect((await response.json()).error.code).toBe("invalid_signature");
-    expect(rpc).not.toHaveBeenCalled();
   });
 
   it.each([

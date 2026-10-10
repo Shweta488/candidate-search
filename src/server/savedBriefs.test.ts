@@ -57,12 +57,12 @@ describe("saved searches", () => {
     });
   });
 
-  it("saves for the recruiter's company, with the filters cleaned", async () => {
+  it("saves for the recruiter's company, without repeats, empty lists or keys it doesn't know", async () => {
     const { query } = fakeDb({ data: { id: SAVED }, error: null });
     await expect(
       saveBrief(recruiter, {
         brief: "go",
-        filters: { skills: ["Go", "Go"], cities: [] },
+        filters: { skills: ["Go", "Go"], cities: [], colour: ["blue"], limit: 5 },
       }),
     ).resolves.toEqual({ id: SAVED });
     expect(query.insert).toHaveBeenCalledWith({
@@ -70,14 +70,6 @@ describe("saved searches", () => {
       brief: "go",
       filters: { skills: ["Go"] },
     });
-  });
-
-  it("drops keys it doesn't know and saves the rest", async () => {
-    const { query } = fakeDb({ data: { id: SAVED }, error: null });
-    await expect(
-      saveBrief(recruiter, { brief: "go", filters: { skills: ["Go"], colour: ["blue"], limit: 5 } }),
-    ).resolves.toEqual({ id: SAVED });
-    expect(query.insert).toHaveBeenCalledWith({ company_id: "c1", brief: "go", filters: { skills: ["Go"] } });
   });
 
   it("keeps every key a search understands", async () => {

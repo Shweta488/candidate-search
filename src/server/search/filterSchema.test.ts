@@ -113,11 +113,8 @@ describe("filterToolSchema", () => {
     }
   });
 
-  it("allows no other properties", () => {
+  it("allows no other properties and requires every field, so the model decides on each one", () => {
     expect(schema.additionalProperties).toBe(false);
-  });
-
-  it("requires every field, so the model decides on each one", () => {
     expect([...schema.required].sort()).toEqual(Object.keys(schema.properties).sort());
     expect(schema.properties.open_to_work.anyOf).toEqual([{ type: "boolean" }, { type: "null" }]);
   });

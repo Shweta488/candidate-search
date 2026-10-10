@@ -183,14 +183,10 @@ describe("Stripe webhook", () => {
 
   // Once the signature passes, the answer is 200 whatever the event holds (LLD 5.3).
   describe("signed events we can't read", () => {
-    it("ignores a body that isn't JSON and changes no plan", async () => {
+    it("ignores a body that isn't JSON and an event without metadata.company: no plan changes, nothing recorded", async () => {
       const before = await plans();
       expect(await sendSigned("not json")).toEqual({ status: 200, body: { outcome: "ignored" } });
-      expect(await plans()).toEqual(before);
-    });
 
-    it("ignores a subscription event without metadata.company, changes no plan and records nothing", async () => {
-      const before = await plans();
       const noCompany = JSON.stringify({
         id: `evt_test_${RUN}_nocompany`,
         type: "customer.subscription.updated",

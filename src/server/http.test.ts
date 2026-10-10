@@ -59,11 +59,6 @@ describe("readJson", () => {
     await expect(readJson(post("brief=go"), schema)).rejects.toMatchObject({ code: "invalid_request" });
   });
 
-  it("rejects a body over 16 KB", async () => {
-    const body = JSON.stringify({ brief: "x".repeat(16 * 1024) });
-    await expect(readJson(post(body), schema)).rejects.toMatchObject({ message: expect.stringMatching(/16 KB/) });
-  });
-
   it("lets the schema reject a wrong shape", async () => {
     await expect(readJson(post('{"brief":3}'), schema)).rejects.toBeInstanceOf(z.ZodError);
   });
@@ -75,7 +70,7 @@ describe("readRawBody", () => {
     await expect(readRawBody(new Request("http://localhost/", { method: "POST", body }))).resolves.toBe(body);
   });
 
-  it("uses the limit the route asks for", async () => {
+  it("rejects a body over 16 KB, or over the limit the route asks for", async () => {
     const request = () => new Request("http://localhost/", { method: "POST", body: "x".repeat(20 * 1024) });
     await expect(readRawBody(request())).rejects.toMatchObject({ message: expect.stringMatching(/16 KB/) });
     await expect(readRawBody(request(), 32 * 1024)).resolves.toHaveLength(20 * 1024);

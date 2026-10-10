@@ -40,11 +40,4 @@ describe("handleStripeEvent", () => {
       expect.objectContaining({ p_subscription_id: null, p_company_code: null, p_status: null }),
     );
   });
-
-  it("passes database errors on", async () => {
-    fakeRpc({ data: null, error: { code: "XX000", message: "down" } });
-    await expect(
-      handleStripeEvent({ id: "evt_3", type: "invoice.paid", created: 1, subscription: null }),
-    ).rejects.toMatchObject({ code: "XX000" });
-  });
 });

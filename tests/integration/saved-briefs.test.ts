@@ -33,7 +33,7 @@ describe("saved searches", () => {
     expect(await remove("/api/saved-briefs/6f1c6a8e-1d1b-4c55-9d8e-0a6b1f1f2c3d", "")).toBe(401);
   });
 
-  it("saves a search and stores its filters cleaned", async () => {
+  it("saves a search and stores its filters cleaned, without keys it doesn't know", async () => {
     const first = await postJson<{ id: string }>(
       "/api/saved-briefs",
       {
@@ -42,6 +42,7 @@ describe("saved searches", () => {
           ...SAMPLE_FILTERS,
           cities: ["New York", "New York"],
           schools: [],
+          colour: ["blue"], // a key we don't know is left out, not rejected
         },
       },
       token,
@@ -63,29 +64,13 @@ describe("saved searches", () => {
     expect(status).toBe(200);
     const mine = body.saved_briefs.filter((s) => s.brief.startsWith(RUN));
     expect(mine.map((s) => s.id)).toEqual([secondId, firstId]);
-    expect(mine[1]).toMatchObject({
-      brief: `${RUN} react`,
-      filters: SAMPLE_FILTERS,
-    });
-  });
-
-  it("ignores filter keys it doesn't know, and doesn't store them", async () => {
-    const { status, body } = await postJson<{ id: string }>(
-      "/api/saved-briefs",
-      { brief: `${RUN} unknown keys`, filters: { skills: ["Go"], colour: ["blue"], limit: 5 } },
-      token,
-    );
-    expect(status).toBe(201);
-
-    const list = await api<{ saved_briefs: SavedBrief[] }>("/api/saved-briefs", token);
-    expect(list.body.saved_briefs.find((s) => s.id === body.id)?.filters).toEqual({ skills: ["Go"] });
-    await remove(`/api/saved-briefs/${body.id}`, token);
+    expect(mine[1].brief).toBe(`${RUN} react`);
+    expect(mine[1].filters).toEqual(SAMPLE_FILTERS); // exactly these: no repeats, empty lists or unknown keys
   });
 
   // The other invalid inputs are unit tests (savedBriefs.test.ts, filterSchema.test.ts).
   it.each([
     ["missing filters", { brief: "x" }],
-    ["filters that aren't an object", { brief: "x", filters: ["Go"] }],
     ["an empty brief", { brief: "  ", filters: {} }],
   ])("rejects %s with a 400", async (_case, body) => {
     const { status, body: error } = await postJson<ApiErrorBody>("/api/saved-briefs", body, token);
