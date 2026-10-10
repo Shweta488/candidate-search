@@ -74,6 +74,12 @@ describe("readRawBody", () => {
     const body = '{"id": "evt_1",  "x": 1}';
     await expect(readRawBody(new Request("http://localhost/", { method: "POST", body }))).resolves.toBe(body);
   });
+
+  it("uses the limit the route asks for", async () => {
+    const request = () => new Request("http://localhost/", { method: "POST", body: "x".repeat(20 * 1024) });
+    await expect(readRawBody(request())).rejects.toMatchObject({ message: expect.stringMatching(/16 KB/) });
+    await expect(readRawBody(request(), 32 * 1024)).resolves.toHaveLength(20 * 1024);
+  });
 });
 
 describe("withRequestLog", () => {

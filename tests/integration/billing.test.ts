@@ -179,28 +179,41 @@ describe("Stripe webhook", () => {
     it("changes nothing when the signature fails", async () => {
       expect(await subscriptionStatus("sig")).toBeUndefined();
     });
+  });
 
-    it("rejects a signed body that isn't JSON, or misses a field we need, as invalid_request", async () => {
-      const notJson = await sendSigned("not json");
-      expect(notJson.status).toBe(400);
-      expect(notJson.body.error.code).toBe("invalid_request");
+  // Once the signature passes, the answer is 200 whatever the event holds (LLD 5.3).
+  describe("signed events we can't read", () => {
+    it("ignores a body that isn't JSON and changes no plan", async () => {
+      const before = await plans();
+      expect(await sendSigned("not json")).toEqual({ status: 200, body: { outcome: "ignored" } });
+      expect(await plans()).toEqual(before);
+    });
 
+    it("ignores a subscription event without metadata.company, changes no plan and records nothing", async () => {
+      const before = await plans();
       const noCompany = JSON.stringify({
         id: `evt_test_${RUN}_nocompany`,
         type: "customer.subscription.updated",
         created: 100,
         data: { object: { id: `sub_test_${RUN}_nocompany`, status: "active", metadata: {} } },
       });
-      const missing = await sendSigned(noCompany);
-      expect(missing.status).toBe(400);
-      expect(missing.body.error.code).toBe("invalid_request");
+      expect(await sendSigned(noCompany)).toEqual({ status: 200, body: { outcome: "ignored" } });
+      expect(await plans()).toEqual(before);
+      expect(await subscriptionStatus("nocompany")).toBeUndefined();
+
+      const { data } = await adminClient()
+        .schema("private")
+        .from("stripe_events")
+        .select("id")
+        .eq("id", `evt_test_${RUN}_nocompany`);
+      expect(data).toEqual([]);
     });
 
-    it("rejects a body over 16 KB", async () => {
-      const big = JSON.stringify({ id: `evt_test_${RUN}_big`, type: "x", created: 1, padding: "x".repeat(17_000) });
-      const response = await sendSigned(big);
-      expect(response.status).toBe(400);
-      expect(response.body.error.code).toBe("invalid_request");
+    it("applies an event of about 20 KB", async () => {
+      const event = JSON.parse(subscriptionEvent("big", { created: 100, sub: "big", status: "past_due" }));
+      const big = JSON.stringify({ ...event, padding: "x".repeat(20 * 1024) });
+      expect(await sendSigned(big)).toEqual({ status: 200, body: { outcome: "applied" } });
+      expect(await subscriptionStatus("big")).toBe("past_due");
     });
   });
 

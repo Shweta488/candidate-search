@@ -10,7 +10,7 @@ Builds on [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Format:** JSON in and out, `snake_case` keys (matches the brief's contract, for example `search_id`).
 - **Errors:** always `{ "error": { "code": "<machine_code>", "message": "<human sentence>" } }`.
 - **Not mine = not found:** a resource that belongs to another company returns `404`, never `403`, so the API never confirms it exists.
-- **Body size:** request bodies over 16 KB are rejected with `400`.
+- **Body size:** request bodies over 16 KB are rejected with `400`. The webhook accepts up to 1 MB, because a full Stripe event can be larger than 16 KB.
 - **Page size:** fixed at 20.
 
 | Status | `code` | When |
@@ -164,7 +164,7 @@ Re-running a saved search is `POST /api/search` with its `brief` and `filters`.
 **`POST /api/billing/events`** (no recruiter token):
 
 - `400 { "error": { "code": "invalid_signature" } }` when the signature is missing or wrong.
-- Otherwise `200 { "received": true, "outcome": "applied" | "duplicate" | "stale" | "ignored" }`. `outcome` is for our logs and tests; Stripe only looks at the status code.
+- Otherwise `200 { "outcome": "applied" | "duplicate" | "stale" | "ignored" }`, also for a signed event we can't read (`ignored`). `outcome` is for our logs and tests; Stripe only looks at the status code.
 
 ## 2. Database
 
@@ -280,7 +280,7 @@ Index `(company_id, created_at desc)`.
 | `last_event_id` | `text` not null | tie-break for events in the same second (section 5) |
 | `updated_at` | `timestamptz` | |
 
-**`private.stripe_events`**: `id text` PK (the dedupe key), `type text`, `created bigint`, `outcome text check (in ('applied','stale','ignored'))`, `received_at`. Every verified event is recorded once, including ignored types.
+**`private.stripe_events`**: `id text` PK (the dedupe key), `type text`, `created bigint`, `outcome text check (in ('applied','stale','ignored'))`, `received_at`. Every verified event we can read is recorded once, including ignored types.
 
 ### 2.3 Indexes
 
@@ -591,10 +591,10 @@ Concurrent `spend_search_credit` calls for one company queue on the row lock; ea
 
 `POST /api/billing/events` does not use `withRecruiter`; `withRequestLog` gives it the same error handling and request log, with no company:
 
-1. Read the raw body with `await request.text()`.
+1. Read the raw body with `readRawBody(request, 1 MB)`.
 2. Verify the `Stripe-Signature` header against the raw body. Failure: `400 invalid_signature`.
-3. Only then `JSON.parse` and zod-validate the event.
-4. `billing.handleStripeEvent(event)` and return `200` with the outcome.
+3. Only then `JSON.parse` and zod-validate the event. Failure: log the reason and return `200` with `ignored`.
+4. `billing.handleStripeEvent(event)` and return `200` with the outcome. A database failure is a `500`, so Stripe sends the event again.
 
 The signature and event rules are in section 5.
 
@@ -628,9 +628,10 @@ Any failure: `400 invalid_signature`. The reason (missing header, bad format, mi
 
 After the signature passes, the raw body is parsed with zod:
 
-- Every event: `id` (string), `type` (string), `created` (integer). Missing: `400 invalid_request`.
-- `customer.subscription.created`, `.updated`, `.deleted` also need `data.object.id`, `data.object.status` and `data.object.metadata.company`. Missing: `400 invalid_request`.
+- Every event: `id` (string), `type` (string), `created` (integer).
+- `customer.subscription.created`, `.updated`, `.deleted` also need `data.object.id`, `data.object.status` and `data.object.metadata.company`.
 - Any other `type` is recorded as `ignored`.
+- A body that isn't JSON, or misses one of these fields, is answered `200` with `ignored` and is not recorded: the sender is Stripe, and a `400` would only make it send the same event again. The reason is logged (the field name, never the body).
 
 Status used: `canceled` for `.deleted`, otherwise `data.object.status`.
 

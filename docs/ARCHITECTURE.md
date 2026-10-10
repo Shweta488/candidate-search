@@ -189,7 +189,7 @@ Every recruiter route takes `Authorization: Bearer <supabase access token>`.
 | `POST` / `DELETE /api/shortlists/:id/people/:personId` | 200 (adding twice changes nothing) | 401, 404 |
 | `GET` / `POST /api/saved-briefs`, `DELETE /api/saved-briefs/:id` | list / `{ id }` / 204 | 400, 401, 404 |
 | `GET /api/plan` | `{ plan: "free" or "paid", searches_remaining: number or null, company_name }` | 401 |
-| `POST /api/billing/events` (no token) | 200, also for repeats and ignored types | 400 bad signature |
+| `POST /api/billing/events` (no token) | 200, also for repeats, ignored types and signed events we can't read | 400 bad signature |
 
 Another company's resource returns **404, not 403**, so the API never confirms it exists. Errors share one shape: `{ error: { code, message } }`.
 

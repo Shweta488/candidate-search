@@ -78,17 +78,18 @@ export async function readJson<S extends z.ZodType>(request: Request, schema: S)
   return schema.parse(parseJsonText(await readRawBody(request)));
 }
 
-// The body as text, exactly as sent, up to 16 KB. The Stripe webhook needs the raw text
-// because the signature covers those exact bytes (LLD 4.7).
-export async function readRawBody(request: Request): Promise<string> {
+// The body as text, exactly as sent, up to maxBytes (16 KB unless the route asks for more).
+// The Stripe webhook needs the raw text because the signature covers those exact bytes
+// (LLD 4.7), and a larger limit because a full Stripe event can be bigger than 16 KB.
+export async function readRawBody(request: Request, maxBytes = MAX_BODY_BYTES): Promise<string> {
   const declared = Number(request.headers.get("content-length") ?? 0);
-  if (declared > MAX_BODY_BYTES) throw tooLarge();
+  if (declared > maxBytes) throw tooLarge(maxBytes);
   const text = await request.text();
-  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) throw tooLarge();
+  if (new TextEncoder().encode(text).length > maxBytes) throw tooLarge(maxBytes);
   return text;
 }
 
-export function parseJsonText(text: string): unknown {
+function parseJsonText(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch {
@@ -101,6 +102,6 @@ export function parseParams<S extends z.ZodType>(params: unknown, schema: S): z.
   return schema.parse(params);
 }
 
-function tooLarge(): AppError {
-  return new AppError("invalid_request", "The request body must be 16 KB or less.");
+function tooLarge(maxBytes: number): AppError {
+  return new AppError("invalid_request", `The request body must be ${maxBytes / 1024} KB or less.`);
 }
