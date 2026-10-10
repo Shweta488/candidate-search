@@ -1,10 +1,6 @@
 .form {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
 }
 
 .label {
@@ -13,27 +9,76 @@
   font-weight: 500;
 }
 
-.row {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-3);
+/* One box for the text and the button. The focus ring is drawn on the box, because the
+   text area inside has no border of its own. */
+.box {
+  display: grid;
+  /* Text and hint on the left; the search button on the right, centred top to bottom. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-4);
+  row-gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-card);
+}
+
+.box:focus-within {
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.invalid {
+  border-color: var(--color-danger);
 }
 
 .textarea {
-  flex: 1;
+  grid-column: 1;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
+  padding: var(--space-1) 0 0;
+  border: 0;
+  background: none;
   color: var(--color-text);
   font: inherit;
   line-height: 1.5;
-  resize: vertical;
+  resize: none;
 }
 
-.textarea[aria-invalid="true"] {
-  border-color: var(--color-danger);
+.textarea:focus-visible {
+  outline: none; /* the box shows the focus ring */
+}
+
+.hint {
+  grid-column: 1;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.submit {
+  display: grid;
+  flex: none;
+  place-items: center;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--btn-hover);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .error {
@@ -43,12 +88,12 @@
 }
 
 @media (max-width: 639px) {
-  .row {
-    flex-direction: column;
-    align-items: stretch;
+  /* No keyboard shortcuts on a phone, so the hint goes; the button stays centred. */
+  .hint {
+    display: none;
   }
 
-  .button {
-    width: 100%;
+  .box {
+    padding-right: var(--space-4);
   }
 }

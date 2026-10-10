@@ -88,7 +88,12 @@ function Profile({ candidate: c, onListsChanged }: { candidate: Candidate; onLis
         <Avatar src={c.avatar_url} name={c.full_name} size="lg" className={styles.avatar} />
         <div className={styles.titleRow}>
           <PageHeading>{c.full_name}</PageHeading>
-          <AddToList candidateId={c.id} candidateName={c.full_name} onAdded={onListsChanged} />
+          <AddToList
+            candidateId={c.id}
+            candidateName={c.full_name}
+            listIds={c.shortlist_ids}
+            onAdded={onListsChanged}
+          />
         </div>
         <p className={styles.line}>
           {c.current_title} · {c.current_company}

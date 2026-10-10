@@ -1,4 +1,5 @@
 import type { Filters, Vocabulary } from "@/shared/types";
+import { seniorityLabel } from "./format";
 
 // The filters a recruiter is editing before running them again (LLD 6.5).
 // Plain functions that return new objects, so the page can keep the draft in state.
@@ -51,14 +52,23 @@ function isListField(field: FilterField): field is ListField {
   return FIELDS[field].list !== undefined;
 }
 
+// How a filter value is shown. Seniority and company type are lower case in the data
+// ("senior", "startup"); tags and the editor show them like the result cards do
+// ("Senior", "Startup"). The stored value never changes.
+export function valueLabel(field: FilterField, value: string): string {
+  if (field === "seniorities") return seniorityLabel(value);
+  if (field === "worked_at_company_types") return value.charAt(0).toUpperCase() + value.slice(1);
+  return value;
+}
+
 // One tag per value, in field order.
 export function tagsFor(filters: Filters): Tag[] {
   return FIELD_ORDER.flatMap((field): Tag[] => {
     const value = filters[field];
     if (value === undefined) return [];
     const label = FIELDS[field].label;
-    if (Array.isArray(value)) return value.map((v) => ({ field, value: v, label, text: v }));
-    if (typeof value === "boolean") return [{ field, value, label, text: value ? "yes" : "no" }];
+    if (Array.isArray(value)) return value.map((v) => ({ field, value: v, label, text: valueLabel(field, v) }));
+    if (typeof value === "boolean") return [{ field, value, label, text: value ? "Yes" : "No" }];
     return [{ field, value, label, text: `${value} ${value === 1 ? "year" : "years"}` }];
   });
 }

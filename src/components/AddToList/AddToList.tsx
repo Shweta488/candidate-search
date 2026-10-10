@@ -9,14 +9,21 @@ import styles from "./AddToList.module.css";
 // "Add to list" for one candidate (LLD 6.5): a small panel with the company's lists,
 // loaded each time it opens, and a way to make a new list. After adding it says
 // "Added to {list}" or "Already on {list}". Escape or a click outside closes it.
+//
+// When the candidate is already on a list the button says so ("✓ On Frontend",
+// "✓ On 2 lists") and the panel ticks those lists, so a recruiter scanning results can
+// see who is shortlisted and can still add them to another list.
 
 type Props = {
   candidateId: string;
   candidateName: string;
+  // The lists the candidate was on when the page loaded, and their names if known.
+  listIds?: string[];
+  listNames?: Record<string, string>;
   onAdded?: (listId: string) => void;
 };
 
-export function AddToList({ candidateId, candidateName, onAdded }: Props) {
+export function AddToList({ candidateId, candidateName, listIds = [], listNames = {}, onAdded }: Props) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const [lists, setLists] = useState<ShortlistSummary[] | null>(null);
@@ -26,6 +33,8 @@ export function AddToList({ candidateId, candidateName, onAdded }: Props) {
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+  // Lists joined from this button since the page loaded, with their names.
+  const [added, setAdded] = useState<Record<string, string>>({});
   const wrapper = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const nameInput = useRef<HTMLInputElement>(null);
@@ -48,6 +57,11 @@ export function AddToList({ candidateId, candidateName, onAdded }: Props) {
     };
   }, [open]);
 
+  const onIds = [...new Set([...listIds, ...Object.keys(added)])];
+  const nameOf = (listId: string) => added[listId] ?? listNames[listId] ?? lists?.find((l) => l.id === listId)?.name;
+  const onText =
+    onIds.length === 0 ? null : onIds.length === 1 ? (nameOf(onIds[0]) ?? "1 list") : `${onIds.length} lists`;
+
   function openPanel() {
     setLists(null);
     setLoadError(false);
@@ -66,10 +80,11 @@ export function AddToList({ candidateId, candidateName, onAdded }: Props) {
   async function add(list: { id: string; name: string }) {
     setBusy(true);
     try {
-      const { added } = await api.post<{ added: boolean }>(
+      const { added: wasAdded } = await api.post<{ added: boolean }>(
         `/api/shortlists/${list.id}/people/${encodeURIComponent(candidateId)}`,
       );
-      setStatus(added ? `Added to ${list.name}` : `Already on ${list.name}`);
+      setStatus(wasAdded ? `Added to ${list.name}` : `Already on ${list.name}`);
+      setAdded((current) => ({ ...current, [list.id]: list.name }));
       onAdded?.(list.id);
       close();
     } catch {
@@ -116,10 +131,11 @@ export function AddToList({ candidateId, candidateName, onAdded }: Props) {
         size="sm"
         aria-expanded={open}
         aria-controls={`${id}-panel`}
-        aria-label={`Add ${candidateName} to a list`}
+        aria-label={onText ? `${candidateName} is on ${onText}. Add to another list` : `Add ${candidateName} to a list`}
+        className={onText ? styles.on : undefined}
         onClick={() => (open ? close() : openPanel())}
       >
-        Add to list ▾
+        {onText ? <span className={styles.onText}>✓ On {onText}</span> : "Add to list"} ▾
       </Button>
       <p className={styles.status} role="status">
         {status}
@@ -138,7 +154,15 @@ export function AddToList({ candidateId, candidateName, onAdded }: Props) {
                   {lists.map((list) => (
                     <li key={list.id}>
                       <button type="button" className={styles.item} disabled={busy} onClick={() => void add(list)}>
-                        <span className={styles.itemName}>{list.name}</span>
+                        <span className={styles.itemName}>
+                          {onIds.includes(list.id) && (
+                            <>
+                              <span aria-hidden="true">✓ </span>
+                              <span className="visually-hidden">Already on </span>
+                            </>
+                          )}
+                          {list.name}
+                        </span>
                         <span className={styles.count}>{list.member_count}</span>
                       </button>
                     </li>

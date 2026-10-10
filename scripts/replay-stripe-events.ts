@@ -4,6 +4,7 @@
 // acme free, globex paid. Running it again only reports duplicates; make reset undoes it.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { requireRunningApp } from "./app-running.ts";
 import { readLocalSupabase } from "./supabase-status.ts";
 
 type SampleFile = {
@@ -13,6 +14,8 @@ type SampleFile = {
 
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 const samples = JSON.parse(readFileSync(new URL("../data/stripe-events.json", import.meta.url), "utf8")) as SampleFile;
+
+await requireRunningApp(APP_URL);
 
 for (const event of samples.events) {
   const response = await fetch(`${APP_URL}/api/billing/events`, {

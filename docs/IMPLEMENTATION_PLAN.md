@@ -130,6 +130,18 @@ Branch `s10-cleanup`. No behaviour change.
   - `test: remove tests that repeat other tests`
   - `docs: tidy README and delete unused screenshots`
 
+### S11 UI polish
+Branch `s11-ui-polish`. FR1, FR2, FR4, FR5. LLD 1.3, 3.7, 6.2, 6.5, 6.7. From a review of the running app.
+
+- **Done when:** results show which lists a candidate is on; filter values read the same way everywhere; the whole result card opens the candidate; the search start page shows the 2 newest saved searches and shortlists as tiles; the search box has an icon button inside; signing out and in again opens Search; the replay and eval scripts say when the app isn't running.
+- **Decided not to build:** adding a filter without using a search (ARCHITECTURE 7.2; README next steps).
+- **Tests:** unit (list ids per result, value labels), integration (list ids on results, and never another company's), Cypress for each change, paging still under 300 ms.
+- **Commits:**
+  - `feat(search): return which lists each result is on`
+  - `feat(ui): show lists on result cards and polish the search page`
+  - `style(ui): restyle the search box`
+  - `docs: retake README screenshots and record the UI decisions`
+
 ## Risks
 
 | Risk | Mitigation |

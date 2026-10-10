@@ -58,6 +58,7 @@
 }
 
 .examplesLabel {
+  margin: 0;
   color: var(--color-text-muted);
   font-size: var(--text-compact);
   font-weight: 600;
@@ -88,6 +89,90 @@
 .example:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+/* Saved searches and shortlists at a glance: a title, then two compact tiles with
+   "View all" at the end of the row. */
+.glance {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.glanceTitle {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.glanceRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.glanceAll {
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: grid;
+  align-content: space-between;
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 88px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-card);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.tile:hover {
+  border-color: var(--color-primary);
+}
+
+.tileTitle {
+  /* Long briefs stop after two lines; the full text is on the page the tile opens. */
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tileDetail {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 639px) {
+  .glanceRow,
+  .tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .glanceRow {
+    gap: var(--space-2);
+  }
+
+  .tile {
+    min-height: 64px;
+  }
 }
 
 .planNote {

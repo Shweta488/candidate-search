@@ -1,8 +1,16 @@
 // Shortlist routes through the running app (LLD 1.5). Lists made here are deleted at the end.
-import type { ApiErrorBody, Candidate, Shortlist, ShortlistSummary } from "@/shared/types";
-import { adminClient, api, APP_URL, postJson, RECRUITERS, signIn } from "./helpers";
+import type { ApiErrorBody, Candidate, SearchResponse, Shortlist, ShortlistSummary } from "@/shared/types";
+import { adminClient, api, APP_URL, postJson, RECRUITERS, resetSearches, signIn } from "./helpers";
 
 const RUN = `test ${Date.now()}`;
+
+// Filters that match cand_0629 (the person put on a list here) and a few others.
+const MATCHES_CAND_0629 = {
+  roles: ["Full Stack Engineer"],
+  seniorities: ["senior"],
+  cities: ["New York"],
+  skills: ["AWS", "Postgres", "React"],
+};
 
 async function send(method: "PATCH" | "DELETE" | "POST", path: string, token: string, body?: unknown) {
   const response = await fetch(`${APP_URL}${path}`, {
@@ -24,6 +32,7 @@ describe("shortlists", () => {
 
   afterAll(async () => {
     await adminClient().from("shortlists").delete().like("name", `${RUN}%`);
+    await resetSearches("acme");
   });
 
   it("rejects requests without a token", async () => {
@@ -61,6 +70,25 @@ describe("shortlists", () => {
     const again = await send("POST", `/api/shortlists/${listId}/people/cand_0629`, token);
     expect(again).toEqual({ status: 200, body: { added: false } });
     await send("POST", `/api/shortlists/${listId}/people/cand_0001`, token);
+  });
+
+  it("says on search results which lists each person is on", async () => {
+    await resetSearches("acme");
+    const search = await postJson<SearchResponse>(
+      "/api/search",
+      { brief: "list ids on results", filters: MATCHES_CAND_0629 },
+      token,
+    );
+    expect(search.status).toBe(200);
+    const onList = search.body.results.find((result) => result.id === "cand_0629");
+    expect(onList?.shortlist_ids).toContain(listId);
+    const others = search.body.results.filter((result) => result.id !== "cand_0629");
+    expect(others.length).toBeGreaterThan(0);
+    for (const result of others) expect(result.shortlist_ids).not.toContain(listId);
+
+    // Paging reads the same field.
+    const page = await api<SearchResponse>(`/api/search/${search.body.search_id}?page=1`, token);
+    expect(page.body.results.find((result) => result.id === "cand_0629")?.shortlist_ids).toContain(listId);
   });
 
   it("answers 404 for an unknown person or list", async () => {

@@ -8,12 +8,12 @@
 
 Recruiters should be able to:
 
-- **FR1** search for candidates by describing them in plain English, and see the filters the app understood plus ranked, paged results;
+- **FR1** search for candidates by describing them in plain English, and see the filters the app understood plus ranked, paged results, where each result opens the candidate and says which of their shortlists the candidate is already on;
 - **FR2** correct a search by editing or removing any understood filter, without retyping the brief;
 - **FR3** view a candidate's experience, education and skills;
-- **FR4** create, rename and delete named shortlists, and add or remove candidates;
-- **FR5** save a search and re-run it later;
-- **FR6** see their plan and searches remaining (free plan: 1 search in total, paging is free);
+- **FR4** create, rename and delete named shortlists, add or remove candidates, and see their newest shortlists on the search start page;
+- **FR5** save a search and re-run it later, and see their newest saved searches on the search start page;
+- **FR6** see their company, plan and searches remaining (free plan: 1 search in total, paging is free);
 
 and the system should:
 
@@ -180,7 +180,7 @@ Every recruiter route takes `Authorization: Bearer <supabase access token>`.
 
 | Route | Returns | Errors |
 |---|---|---|
-| `POST /api/search` `{ brief, filters? }` | `{ search_id, filters, unsupported, total, results[20], searches_remaining }` | 400, 401, 402 limit reached, 503 LLM down |
+| `POST /api/search` `{ brief, filters? }` | `{ search_id, filters, unsupported, total, results[20], searches_remaining }`; each result says which of my lists the candidate is on | 400, 401, 402 limit reached, 503 LLM down |
 | `GET /api/search/:id?page=N` | `{ search_id, page, page_size, total, results }` | 400, 401, 404 |
 | `GET /api/vocabulary` | allowed values for the filter editor | 401 |
 | `GET /api/people/:id` | candidate + experiences + education | 401, 404 |
@@ -188,7 +188,7 @@ Every recruiter route takes `Authorization: Bearer <supabase access token>`.
 | `GET` / `PATCH` / `DELETE /api/shortlists/:id` | members / rename / delete | 401, 404 |
 | `POST` / `DELETE /api/shortlists/:id/people/:personId` | 200 (adding twice changes nothing) | 401, 404 |
 | `GET` / `POST /api/saved-briefs`, `DELETE /api/saved-briefs/:id` | list / `{ id }` / 204 | 400, 401, 404 |
-| `GET /api/plan` | `{ plan: "free" or "paid", searches_remaining: number or null }` | 401 |
+| `GET /api/plan` | `{ plan: "free" or "paid", searches_remaining: number or null, company_name }` | 401 |
 | `POST /api/billing/events` (no token) | 200, also for repeats and ignored types | 400 bad signature |
 
 Another company's resource returns **404, not 403**, so the API never confirms it exists. Errors share one shape: `{ error: { code, message } }`.
@@ -241,6 +241,7 @@ flowchart LR
 
     S1 -- "(server) spend_search_credit, LLM, run_search" --> T1[("private: companies, searches,<br/>search_results, candidates")]
     S2 -- "(server) get_search_page: 20 rows by (search_id, rank)<br/>scoped to my company, never touches the quota" --> T1
+    S1 & S2 -- "recruiter client: which of my lists each result is on" --> T3
     S3 -- "(server) distinct values, cached in memory" --> T2
     P1 -- "(server) read one candidate" --> T2[("private: candidates, experiences, educations")]
     P1 -- "recruiter client: my shortlist_ids" --> T3
@@ -285,9 +286,9 @@ How each requirement flows:
 
 - **FR1 Search.** The browser sends the brief to `POST /api/search`. The route verifies the token, spends one search credit, asks Claude for filters, validates them, runs one SQL query, stores the ranked ids and returns page 1. *(Deep dives 6.1 to 6.3.)*
 - **FR2 Correct.** The browser sends the edited filters with the brief; Claude is skipped, everything else is the same. It counts as a new search.
-- **FR3 View.** `GET /api/people/:id` reads one candidate with experiences and education.
-- **FR4, FR5 Lists and saved searches.** Simple create, read, update and delete, run as the recruiter so RLS limits it to their company. *(Deep dive 6.4.)*
-- **FR6 Plan.** `GET /api/plan` returns the derived plan and searches remaining.
+- **FR3 View.** `GET /api/people/:id` reads one candidate with experiences and education. Clicking anywhere on a result card opens it.
+- **FR4, FR5 Lists and saved searches.** Simple create, read, update and delete, run as the recruiter so RLS limits it to their company. The same recruiter-scoped read tells each search result which lists the candidate is on, and feeds the at-a-glance tiles on the start page. *(Deep dive 6.4.)*
+- **FR6 Plan.** `GET /api/plan` returns the company name, the derived plan and searches remaining.
 - **FR7 Billing.** `POST /api/billing/events` verifies the signature and applies the event once and in order. *(Deep dive 6.5.)*
 
 ## 5. Tech stack and why
@@ -333,7 +334,7 @@ sequenceDiagram
     participant V as Filter validator (zod + vocabulary)
     participant S as private.run_search()
 
-    R->>UI: types brief, presses Search
+    R->>UI: types brief, presses Enter or the search button
     UI->>API: { brief } + Bearer token
     API->>API: verify token, find company, brief length 1 to 500
     API->>Q: spend one search credit for this company (secret-key client)
@@ -478,6 +479,8 @@ Decisions made while designing and building, with the reason for each. Section 5
 | Oct 9 | Search | "Engineer", "software engineer" or "developer" with no qualifier means every engineering role | Otherwise "software engineers" returns nobody and "staff engineers" includes non-engineers |
 | Oct 9 | Search | Rank closer matches first (more of the brief's values in multi-value fields), then open to work, then experience | Puts the best of the right people on page 1 |
 | Oct 9 | Search | No brief → filters cache yet | The graders run each brief once and the 3 s target is met without it; kept as a next step |
+| Oct 9 | Free plan | Adding a filter to a search already run still counts as a new search, for now | Adding a filter only narrows results the recruiter was already given, so it could safely be free, but the server would have to prove the new filters are a strict narrowing of a stored search, and a mistake there is a free-plan bypass. Listed as a next step |
+| Oct 9 | UI | After Sign out, the next sign-in opens Search; a link opened while signed out still returns to its page | Signing out on one page and in as another company used to land on that page |
 | Oct 9 | Search | The Claude request stays as it is: thinking off and effort `low` were both measured and neither made a search faster | Across 4 briefs the means were 1.81 s (as is), 1.85 s (thinking off) and 1.80 s (effort low), with the same filters. Most of the time is fixed per call, not output |
 
 ### 7.3 Facts from the data that shaped these decisions
@@ -507,4 +510,4 @@ Three layers with a clear split between data, API and UI. **UI:** `app/(app)` pa
 
 ## 10. UI (summary)
 
-Screens: sign in, search, candidate, shortlists, saved searches. Search shows each understood filter as an editable filter tag, a "Couldn't filter on" note when relevant, result cards with an "Add to list" action, and Previous / Next paging. A plan pill shows searches left; at the limit, an Upgrade panel replaces results. Loading, empty and error states are designed, and everything works at phone width. Design tokens, page states and the accessibility checklist are in [LLD.md](LLD.md) section 6.7.
+Screens: sign in, search, candidate, shortlists, saved searches. Search shows each understood filter as an editable filter tag, a "Couldn't filter on" note when relevant, result cards that open the candidate, say which lists they are already on and have an "Add to list" action, and Previous / Next paging. The start page shows the recruiter's two newest saved searches and shortlists at a glance, or an intro with example briefs when nothing is saved yet. A plan pill shows searches left; at the limit, an Upgrade panel replaces results. Loading, empty and error states are designed, and everything works at phone width. Design tokens, page states and the accessibility checklist are in [LLD.md](LLD.md) section 6.7.

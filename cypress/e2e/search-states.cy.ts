@@ -20,6 +20,7 @@ function candidate(n: number) {
     years_experience: 7,
     open_to_work: n === 1,
     skills: ["React", "TypeScript"],
+    shortlist_ids: [],
   };
 }
 
@@ -52,6 +53,9 @@ for (const viewport of VIEWPORTS) {
   describe(`Search page states (${viewport.name})`, () => {
     beforeEach(() => {
       cy.viewport(viewport.width, viewport.height);
+      // The start page for someone with nothing saved, whatever acme has in the database.
+      cy.intercept("GET", "/api/saved-briefs", { body: { saved_briefs: [] } });
+      cy.intercept("GET", "/api/shortlists", { body: { shortlists: [] } });
       cy.visit("/sign-in");
       signIn("recruiter@acme.test");
       cy.contains("h1", "Find candidates").should("be.visible");

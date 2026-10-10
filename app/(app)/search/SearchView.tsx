@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { api, toApiError, type ApiError } from "@/client/api";
 import { usePlan } from "@/client/plan";
 import { sameFilters } from "@/client/filterDraft";
+import { peopleText, shortDate } from "@/client/format";
 import { useApiQuery } from "@/client/useApiQuery";
 import { AddToList } from "@/components/AddToList/AddToList";
 import { BriefForm } from "@/components/BriefForm/BriefForm";
@@ -16,7 +17,7 @@ import { PageHeading } from "@/components/PageHeading/PageHeading";
 import { Pager } from "@/components/Pager/Pager";
 import { StatePanel } from "@/components/StatePanel/StatePanel";
 import { UpgradeButton } from "@/components/UpgradeDialog/UpgradeDialog";
-import type { Filters, PlanResponse, SearchPage, SearchResponse } from "@/shared/types";
+import type { Filters, PlanResponse, SavedBrief, SearchPage, SearchResponse, ShortlistSummary } from "@/shared/types";
 import styles from "./search.module.css";
 
 // The search page (LLD 6.5). The URL holds the search being shown (?id=…&page=n), so
@@ -132,40 +133,76 @@ function Search() {
   );
 }
 
+const GLANCE_SHOWN = 2; // the newest two of each; the rest are one click away
+
 const EXAMPLES = [
   "senior React engineers in New York who have worked at a startup",
   "data scientists with a PhD",
   "product designers in San Francisco who are open to work",
 ];
 
-// The start page: what to do, what happens next, and examples to try.
-// Picking an example fills the brief box without searching, because on the free plan a
-// search can't be taken back.
+// The start page. Someone with nothing saved yet gets what to do, what happens next and
+// examples to try: picking one fills the brief box without searching, because on the free
+// plan a search can't be taken back. A recruiter with saved searches goes straight to
+// their newest saved searches and shortlists, each a link (nothing runs from here, so no
+// search is spent by accident).
 function Welcome({ onPick }: { onPick: (brief: string) => void }) {
   const { plan } = usePlan();
+  const saved = useApiQuery<{ saved_briefs: SavedBrief[] }>("/api/saved-briefs");
+  const lists = useApiQuery<{ shortlists: ShortlistSummary[] }>("/api/shortlists");
+  const savedBriefs = saved.data?.saved_briefs ?? [];
+  const shortlists = lists.data?.shortlists ?? [];
+  // Shown once we know there are none saved, so the intro doesn't flash before the tiles.
+  const newHere = !saved.loading && savedBriefs.length === 0;
   return (
-    <section className={styles.welcome} aria-labelledby="welcome-heading">
-      <h2 id="welcome-heading" className={styles.welcomeTitle}>
-        Find the right people by describing them
-      </h2>
-      <p className={styles.welcomeText}>
-        Write who you&apos;re looking for the way you&apos;d tell a colleague. We&apos;ll turn it into filters you can
-        see, then show everyone who matches, best matches first.
-      </p>
-      <div className={styles.examples}>
-        <span className={styles.examplesLabel} id="examples-label">
-          Try one:
-        </span>
-        <ul className={styles.exampleList} aria-labelledby="examples-label">
-          {EXAMPLES.map((brief) => (
-            <li key={brief}>
-              <button type="button" className={styles.example} onClick={() => onPick(brief)}>
-                {brief}
-              </button>
-            </li>
+    <section className={styles.welcome} aria-label="Start here">
+      {newHere && (
+        <>
+          <h2 className={styles.welcomeTitle}>Find the right people by describing them</h2>
+          <p className={styles.welcomeText}>
+            Write who you&apos;re looking for the way you&apos;d tell a colleague. We&apos;ll turn it into filters you
+            can see, then show everyone who matches, best matches first.
+          </p>
+          <div className={styles.examples}>
+            <span className={styles.examplesLabel} id="examples-label">
+              Try one:
+            </span>
+            <ul className={styles.exampleList} aria-labelledby="examples-label">
+              {EXAMPLES.map((brief) => (
+                <li key={brief}>
+                  <button type="button" className={styles.example} onClick={() => onPick(brief)}>
+                    {brief}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+      {savedBriefs.length > 0 && (
+        <Glance id="saved-glance" title="Saved searches" allHref="/saved-searches" total={savedBriefs.length}>
+          {savedBriefs.slice(0, GLANCE_SHOWN).map((item) => (
+            <GlanceTile
+              key={item.id}
+              href="/saved-searches"
+              title={item.brief}
+              detail={`Saved ${shortDate(item.created_at)}`}
+            />
           ))}
-        </ul>
-      </div>
+        </Glance>
+      )}
+      {shortlists.length > 0 && (
+        <Glance id="lists-glance" title="Shortlists" allHref="/shortlists" total={shortlists.length}>
+          {shortlists.slice(0, GLANCE_SHOWN).map((list) => (
+            <GlanceTile
+              key={list.id}
+              href={`/shortlists/${list.id}`}
+              title={list.name}
+              detail={peopleText(list.member_count)}
+            />
+          ))}
+        </Glance>
+      )}
       {plan?.plan === "free" && (
         <p className={styles.planNote}>
           {plan.searches_remaining === 0
@@ -176,6 +213,37 @@ function Welcome({ onPick }: { onPick: (brief: string) => void }) {
         </p>
       )}
     </section>
+  );
+}
+
+// A few of the recruiter's own things on the start page: a title, then the newest two as
+// tiles with "View all" at the end of the row.
+function Glance(props: { id: string; title: string; allHref: string; total: number; children: React.ReactNode }) {
+  return (
+    <div className={styles.glance}>
+      <h2 id={props.id} className={styles.glanceTitle}>
+        {props.title}
+      </h2>
+      <div className={styles.glanceRow}>
+        <ul className={styles.tiles} aria-labelledby={props.id}>
+          {props.children}
+        </ul>
+        <Link href={props.allHref} className={styles.glanceAll}>
+          View all ({props.total})<span className="visually-hidden"> {props.title.toLowerCase()}</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function GlanceTile({ href, title, detail }: { href: string; title: string; detail: string }) {
+  return (
+    <li>
+      <Link href={href} className={styles.tile}>
+        <span className={styles.tileTitle}>{title}</span>
+        <span className={styles.tileDetail}>{detail}</span>
+      </Link>
+    </li>
   );
 }
 
@@ -291,17 +359,7 @@ function Results(props: { page: SearchPage; plan: PlanResponse | undefined; onSe
         <SaveSearch key={page.search_id} brief={page.brief} filters={page.filters} />
       </div>
       {page.results.length > 0 ? (
-        <div className={styles.cards}>
-          {page.results.map((candidate) => (
-            <CandidateCard
-              key={candidate.id}
-              candidate={candidate}
-              matchedSkills={matchedSkills}
-              href={candidateHref(candidate.id, page)}
-              action={<AddToList candidateId={candidate.id} candidateName={candidate.full_name} />}
-            />
-          ))}
-        </div>
+        <ResultCards page={page} matchedSkills={matchedSkills} />
       ) : (
         <StatePanel tone="plain" title="There are no more results.">
           <Link href={`/search?id=${encodeURIComponent(page.search_id)}`}>Back to the first page</Link>
@@ -359,6 +417,34 @@ function SaveSearch({ brief, filters }: { brief: string; filters: Filters }) {
           Couldn&apos;t save the search. Try again.
         </span>
       )}
+    </div>
+  );
+}
+
+// The result cards. Each says which of the recruiter's lists the candidate is already on;
+// the list names are only loaded when someone on this page is on a list.
+function ResultCards({ page, matchedSkills }: { page: SearchPage; matchedSkills: string[] }) {
+  const someoneListed = page.results.some((candidate) => candidate.shortlist_ids.length > 0);
+  const { data } = useApiQuery<{ shortlists: ShortlistSummary[] }>(someoneListed ? "/api/shortlists" : null);
+  const listNames = Object.fromEntries((data?.shortlists ?? []).map((list) => [list.id, list.name]));
+  return (
+    <div className={styles.cards}>
+      {page.results.map((candidate) => (
+        <CandidateCard
+          key={candidate.id}
+          candidate={candidate}
+          matchedSkills={matchedSkills}
+          href={candidateHref(candidate.id, page)}
+          action={
+            <AddToList
+              candidateId={candidate.id}
+              candidateName={candidate.full_name}
+              listIds={candidate.shortlist_ids}
+              listNames={listNames}
+            />
+          }
+        />
+      ))}
     </div>
   );
 }

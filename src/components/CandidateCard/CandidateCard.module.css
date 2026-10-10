@@ -9,11 +9,31 @@
   box-shadow: var(--shadow-card);
 }
 
+/* The whole card opens the candidate: the name link's click area is stretched over the
+   card, so the link itself stays the one thing keyboard and screen reader users meet. */
+.clickable {
+  position: relative;
+}
+
+.clickable .name a::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  content: "";
+}
+
+.clickable:hover {
+  border-color: var(--color-border-strong);
+}
+
 .avatar {
   grid-row: span 4;
 }
 
 .action {
+  /* Positioned, and after the name in the page, so it sits above the stretched link.
+     No z-index: an open Add to list panel must still cover the next card's button. */
+  position: relative;
   grid-column: 3;
   grid-row: 1 / span 4;
   align-self: start;
@@ -38,10 +58,10 @@
   text-decoration: none;
 }
 
-.name a:hover {
+.name a:hover,
+.clickable:hover .name a {
   text-decoration: underline;
 }
-
 
 .line {
   margin: 0;

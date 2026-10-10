@@ -4,6 +4,7 @@ import {
   deleteShortlist,
   getShortlist,
   listShortlists,
+  shortlistIdsByCandidate,
   ShortlistName,
 } from "./shortlists";
 import { getCandidateSummaries } from "./people";
@@ -18,7 +19,19 @@ const LIST = "6f1c6a8e-1d1b-4c55-9d8e-0a6b1f1f2c3d";
 // A chainable query, like Supabase's: each awaited query gets the next queued result.
 function fakeDb(...results: { data: unknown; error: unknown }[]) {
   const query: Record<string, unknown> = {};
-  const methods = ["select", "insert", "update", "delete", "upsert", "eq", "order", "returns", "single", "maybeSingle"];
+  const methods = [
+    "select",
+    "insert",
+    "update",
+    "delete",
+    "upsert",
+    "eq",
+    "in",
+    "order",
+    "returns",
+    "single",
+    "maybeSingle",
+  ];
   for (const method of methods) query[method] = jest.fn(() => query);
   query.then = (resolve: (value: unknown) => void) => resolve(results.shift());
   const from = jest.fn(() => query);
@@ -107,5 +120,33 @@ describe("shortlists", () => {
     const { query } = fakeDb({ data: null, error: null });
     await expect(addMember(recruiter, LIST, "cand_0001")).rejects.toMatchObject({ status: 404 });
     expect(query.upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("shortlistIdsByCandidate", () => {
+  it("groups the recruiter's list ids by candidate", async () => {
+    const { from, query } = fakeDb({
+      data: [
+        { candidate_id: "cand_0001", shortlist_id: "l1" },
+        { candidate_id: "cand_0002", shortlist_id: "l1" },
+        { candidate_id: "cand_0001", shortlist_id: "l2" },
+      ],
+      error: null,
+    });
+    const lists = await shortlistIdsByCandidate(recruiter, ["cand_0001", "cand_0002", "cand_0003"]);
+
+    expect(lists.get("cand_0001")).toEqual(["l1", "l2"]);
+    expect(lists.get("cand_0002")).toEqual(["l1"]);
+    expect(lists.has("cand_0003")).toBe(false);
+    // Read as the recruiter, so RLS keeps it to their company's lists.
+    expect(recruiterClient).toHaveBeenCalledWith("t1");
+    expect(from).toHaveBeenCalledWith("shortlist_members");
+    expect(query.in).toHaveBeenCalledWith("candidate_id", ["cand_0001", "cand_0002", "cand_0003"]);
+  });
+
+  it("asks nothing for no candidates", async () => {
+    const { from } = fakeDb();
+    await expect(shortlistIdsByCandidate(recruiter, [])).resolves.toEqual(new Map());
+    expect(from).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { addValue, removeValue, replaceValue, sameFilters, tagsFor } from "./filterDraft";
+import { addValue, removeValue, replaceValue, sameFilters, tagsFor, valueLabel } from "./filterDraft";
 
 describe("tagsFor", () => {
   it("makes one tag per value, in field order", () => {
@@ -7,10 +7,28 @@ describe("tagsFor", () => {
       "Skill: React",
       "Skill: Go",
       "City: New York",
-      "Open to work: yes",
+      "Open to work: Yes",
       "At least: 5 years",
       "At most: 1 year",
     ]);
+  });
+
+  it("shows seniority and company type like the result cards do, keeping the stored value", () => {
+    const tags = tagsFor({ seniorities: ["senior", "mid"], worked_at_company_types: ["startup"] });
+    expect(tags.map((tag) => `${tag.label}: ${tag.text}`)).toEqual([
+      "Seniority: Senior",
+      "Seniority: Mid-level",
+      "Worked at: Startup",
+    ]);
+    expect(tags.map((tag) => tag.value)).toEqual(["senior", "mid", "startup"]);
+  });
+});
+
+describe("valueLabel", () => {
+  it("leaves every other field as it is in the data", () => {
+    expect(valueLabel("skills", "iOS")).toBe("iOS");
+    expect(valueLabel("cities", "New York")).toBe("New York");
+    expect(valueLabel("worked_at_company_types", "enterprise")).toBe("Enterprise");
   });
 });
 

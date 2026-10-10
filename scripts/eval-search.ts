@@ -9,6 +9,7 @@
 // mean, which are searched directly (no LLM) to get the expected people.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { requireRunningApp } from "./app-running.ts";
 import { readLocalSupabase } from "./supabase-status.ts";
 
 type Query = { brief: string; note?: string; expected_ids?: string[]; expected_filters?: Record<string, unknown> };
@@ -88,6 +89,7 @@ function score(expected: Set<string>, got: string[], page1: string[]) {
 const only = process.argv.slice(2).map((word) => word.toLowerCase());
 const selected = (query: Query) => only.length === 0 || only.some((word) => query.brief.toLowerCase().includes(word));
 
+await requireRunningApp(APP_URL);
 const token = await signIn();
 let samplesPerfect = true;
 

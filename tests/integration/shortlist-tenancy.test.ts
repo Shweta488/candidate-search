@@ -2,10 +2,18 @@
 // to read and change it through our API and directly through Supabase with its own
 // token. Every attempt must fail or match nothing, and globex's list must be unchanged.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Candidate, ShortlistSummary } from "@/shared/types";
-import { adminClient, anonClient, api, APP_URL, postJson, RECRUITERS, signIn } from "./helpers";
+import type { Candidate, SearchResponse, ShortlistSummary } from "@/shared/types";
+import { adminClient, anonClient, api, APP_URL, postJson, RECRUITERS, resetSearches, signIn } from "./helpers";
 
 const NAME = `globex tenancy ${Date.now()}`;
+
+// Filters that match cand_0629 (the person put on a list here) and a few others.
+const MATCHES_CAND_0629 = {
+  roles: ["Full Stack Engineer"],
+  seniorities: ["senior"],
+  cities: ["New York"],
+  skills: ["AWS", "Postgres", "React"],
+};
 
 async function send(method: "PATCH" | "DELETE" | "POST", path: string, token: string, body?: unknown) {
   const response = await fetch(`${APP_URL}${path}`, {
@@ -61,6 +69,20 @@ describe("shortlist tenancy", () => {
       expect((await api(`/api/shortlists/${globexListId}`, acme.token)).status).toBe(404);
       const candidate = await api<Candidate>("/api/people/cand_0629", acme.token);
       expect(candidate.body.shortlist_ids).not.toContain(globexListId);
+    });
+
+    it("never shows globex's list on acme's search results", async () => {
+      await resetSearches("acme");
+      const search = await postJson<SearchResponse>(
+        "/api/search",
+        { brief: "tenancy on results", filters: MATCHES_CAND_0629 },
+        acme.token,
+      );
+      await resetSearches("acme");
+      expect(search.status).toBe(200);
+      const sameCandidate = search.body.results.find((result) => result.id === "cand_0629");
+      expect(sameCandidate).toBeDefined(); // the candidate globex listed is in acme's results
+      expect(search.body.results.flatMap((result) => result.shortlist_ids)).not.toContain(globexListId);
     });
 
     it("answers 404 to every change acme tries", async () => {

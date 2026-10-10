@@ -31,6 +31,7 @@ const page = {
       years_experience: 8,
       open_to_work: true,
       skills: ["React"],
+      shortlist_ids: [],
     },
   ],
 };
@@ -54,6 +55,25 @@ for (const viewport of VIEWPORTS) {
     after(() => {
       cy.task("deleteSavedBriefs", "acme");
       cy.task("resetSearches", "acme");
+    });
+
+    it("shows the newest saved searches on the search start page, each a link to this page", () => {
+      for (const brief of ["first saved", "second saved", "third saved", "fourth saved"]) {
+        cy.task("saveBrief", { company: "acme", brief, filters: FILTERS });
+      }
+      cy.intercept("POST", "/api/search", cy.spy().as("search"));
+      cy.visit("/search");
+
+      cy.contains("h2", "Saved searches").should("be.visible");
+      cy.get("ul[aria-labelledby=saved-glance] a").should("have.length", 2).first().should("contain", "fourth saved");
+      cy.contains("a", "View all (4)").should("have.attr", "href", "/saved-searches");
+      cy.contains("Try one:").should("not.exist");
+      cy.contains("Find the right people by describing them").should("not.exist"); // the intro is for new users
+      checkAccessibility();
+
+      cy.contains("a", "fourth saved").click();
+      cy.location("pathname").should("eq", "/saved-searches");
+      cy.get("@search").should("not.have.been.called"); // nothing runs from the start page
     });
 
     it("saves a search from its results", () => {

@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import type { Filters, SearchResponse } from "@/shared/types";
+import type { Recruiter } from "../auth";
 import { logError, logSearch } from "../log";
 import { refundSearchCredit, spendSearchCredit } from "../plan";
 import { serverClient } from "../supabase";
@@ -39,7 +40,8 @@ export function toRunSearchParams(filters: Filters) {
   };
 }
 
-export async function runSearch(companyId: string, body: SearchBody, requestId: string): Promise<SearchResponse> {
+export async function runSearch(recruiter: Recruiter, body: SearchBody, requestId: string): Promise<SearchResponse> {
+  const companyId = recruiter.companyId;
   const started = performance.now();
   const vocabulary = await getVocabulary();
 
@@ -82,7 +84,7 @@ export async function runSearch(companyId: string, body: SearchBody, requestId: 
       })
       .single<{ search_id: string; total: number }>();
     if (error) throw error;
-    const page = await getSearchPage(companyId, data.search_id, 1);
+    const page = await getSearchPage(recruiter, data.search_id, 1);
     const sqlMs = Math.round(performance.now() - sqlStarted);
 
     // 6. One log line per search. The brief itself is never logged.
