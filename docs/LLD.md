@@ -443,7 +443,7 @@ private.run_search(
 - Each filter arrives as its own typed parameter; `null` means "no constraint". `p_filters` is stored only as a record of what was used, never read for matching.
 - One static statement, with every condition written as `(p_x is null or <condition from 3.1>)` and the whole `WHERE` short-circuited by `not p_return_nobody`.
 - In one transaction: insert the `searches` row, insert every match into `search_results` with its rank, set `total`, return.
-- **Ranking:** `order by open_to_work desc, years_experience desc, id`.
+- **Ranking:** closer matches first, then `open_to_work desc, years_experience desc, id`. "Closer" is the number of the brief's values a candidate matches in the fields where one person can match several (`past_companies`, `past_company_types`, `schools`, `degrees`, `fields_of_study`). Every result still matches every filter.
 
 ### 3.7 Paging
 
