@@ -166,5 +166,23 @@ for (const viewport of VIEWPORTS) {
       cy.get("button[aria-label='Remove City: New York']").click();
       cy.get("[role=status]").should("contain", "You've used your free search, so it can't run on the free plan.");
     });
+
+    it("gives a way back to the results when edited filters hit the free limit", () => {
+      openSearch();
+      cy.get("button[aria-label='Remove City: New York']").click();
+      cy.intercept("POST", "/api/search", {
+        statusCode: 402,
+        body: { error: { code: "search_limit_reached", message: "You've used your free search." } },
+      });
+      cy.contains("button", "Run search").click();
+      cy.contains("h2", "You've used your free search.").should("be.visible");
+      cy.contains("Your earlier results are still here").should("be.visible");
+      checkAccessibility();
+
+      cy.contains("button", "Back to your results").click();
+      cy.contains("h2", "You've used your free search.").should("not.exist");
+      cy.get("button[aria-label='Remove City: New York']").should("be.visible"); // the edit is undone
+      cy.contains("button", "Save search").should("be.visible");
+    });
   });
 }

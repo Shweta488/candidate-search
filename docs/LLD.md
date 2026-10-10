@@ -764,7 +764,7 @@ Re-running a saved search from `/saved-searches` posts its brief and filters, th
 | `ApiError` | Shown |
 |---|---|
 | `401` | redirect to sign-in (handled by `api.ts`) |
-| `402 search_limit_reached` | the limit panel with Upgrade, in place of results |
+| `402 search_limit_reached` | the limit panel with Upgrade, in place of results; when a search was on screen, also **Back to your results** |
 | `404 not_found` | a not-found message for that page |
 | `400 invalid_request` | the message next to the input |
 | `503 search_unavailable` | error panel with Try again (copy in 6.7) |
@@ -802,7 +802,7 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 | No matches | "No candidates match all of these filters. Try removing a filter." |
 | Unsupported ask | "Couldn't filter on: {items}. We're showing nobody rather than the wrong people." Understood filters stay visible, with **Search without these** to run only them (a new search) |
 | No filters understood | "We couldn't find any requirement in that brief. Try a role, skill, location or seniority." |
-| `402` | "You've used your free search." + Upgrade. Paging and shortlisting earlier searches still work |
+| `402` | "You've used your free search." + Upgrade, and that shortlists and saved searches stay as they are. If a search was on screen when the limit was hit (edited filters, "Search without these" or a new brief), the message says its results are still there and **Back to your results** shows it again with its original filters |
 | `503` | "Search is unavailable right now. Your search wasn't used." + Try again |
 | `500`, network | "Something went wrong." + Try again |
 | No search yet, or `404` on `?id=` (an old or wrong link) | The start page, with no error message. With nothing saved: "Find the right people by describing them", one line on what happens, and three example briefs (clicking one fills the box without searching). With saved searches: straight to "Saved searches" and "Shortlists", each showing its 2 newest as tiles (a saved search opens the Saved searches page, a list opens that list) with "View all (n)" at the end of the row. On the free plan, how many searches are left |

@@ -42,7 +42,7 @@ Each spec runs at desktop width and at 390 px, with a WCAG 2.1 AA `cy.checkA11y(
 | `sign-in.cy.ts` | sign in, wrong password, signed-out redirect back to the page asked for, Search after signing out and in again, plan in the header |
 | `search.cy.ts` | a real brief to filter tags and ranked results, paging, "Couldn't filter on" |
 | `search-states.cy.ts` | loading skeleton, results, refresh, unsupported, no requirement, nobody matches, 402, 503 with Try again, 500, 400, welcome |
-| `correct-search.cy.ts` | remove, add and change filter tags; years and skills; undo; the free-plan notice |
+| `correct-search.cy.ts` | remove, add and change filter tags; years and skills; undo; the free-plan notice; back to the results after hitting the free limit |
 | `candidate.cy.ts` | the candidate page, opening it from anywhere on a result card (a real click), back to results, not found |
 | `shortlists.cy.ts` | add from results and the candidate page, the "✓ On {list}" label and ticks on results, the newest lists on the search start page, a missing name, keyboard-only add with real key presses (`cypress-real-events`), open, remove, rename, delete, not found, phone menu |
 | `saved-searches.cy.ts` | save from results, the newest saved searches on the search start page, run on the free plan, used-up free search, delete |
