@@ -870,101 +870,38 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<from supabase status>
 SUPABASE_SECRET_KEY=<from supabase status>
 ```
 
-The exact field names in the `status` output are confirmed when this is built (S0). `ANTHROPIC_API_KEY` and `STRIPE_WEBHOOK_SECRET` are never written to a file: Next.js reads them from the shell, and shell values take priority over `.env.local`. `.env.local` is git-ignored (RULES.md section 7).
+`ANTHROPIC_API_KEY` and `STRIPE_WEBHOOK_SECRET` are never written to a file: Next.js reads them from the shell, and shell values take priority over `.env.local`. `.env.local` is git-ignored (RULES.md section 7).
 
 ## 8. Folder structure
 
+Where each kind of code lives. Pages are listed in 6.1 and routes in 4.5.
+
 ```
 app/
-  layout.tsx                    root layout: fonts, globals.css, SessionProvider
-  globals.css                   design tokens as CSS variables (6.7)
-  page.tsx                      redirects to /search
-  (auth)/sign-in/page.tsx
-  (app)/layout.tsx              guard, PlanProvider, header
-  (app)/search/page.tsx
-  (app)/people/[id]/page.tsx
-  (app)/shortlists/page.tsx
-  (app)/shortlists/[id]/page.tsx
-  (app)/saved-searches/page.tsx
-  api/                          route handlers, one folder per URL (4.5)
-    search/route.ts
-    search/[id]/route.ts
-    vocabulary/route.ts
-    people/[id]/route.ts
-    shortlists/route.ts
-    shortlists/[id]/route.ts
-    shortlists/[id]/people/[personId]/route.ts
-    saved-briefs/route.ts
-    saved-briefs/[id]/route.ts
-    plan/route.ts
-    billing/events/route.ts
+  layout.tsx, globals.css       root layout (font, SessionProvider) and the design tokens (6.7)
+  (auth)/sign-in/               the sign-in page
+  (app)/                        signed-in pages: layout with guard, PlanProvider and header
+  api/                          route handlers, one folder per URL
 
 src/
-  server/                       every file starts with import 'server-only'
-    env.ts                      validated server environment variables (9)
-    supabase.ts                 serverClient, recruiterClient (4.1)
-    auth.ts                     requireRecruiter (4.2)
-    http.ts                     withRecruiter, withRequestLog, readJson, readRawBody, parseParams, json (4.3)
-    errors.ts                   AppError, toErrorResponse (4.4)
-    log.ts                      request and search log lines
-    plan.ts                     spendSearchCredit, refundSearchCredit, getPlan
-    people.ts                   getCandidate
-    shortlists.ts               shortlist and member functions
-    savedBriefs.ts              saved search functions
-    search/
-      brief.ts                  zod Brief schema, shared by search and saved searches
-      vocabulary.ts             load and cache get_vocabulary() (3.2)
-      filterSchema.ts           zod Filters schema and LLM tool schema from the vocabulary
-      prompt.ts                 system prompt and mapping rules
-      extractFilters.ts         the Haiku call (3.3)
-      runSearch.ts              service flow (3.8)
-      getSearchPage.ts          paging (3.7)
-    billing/
-      verifySignature.ts
-      parseEvent.ts
-      handleStripeEvent.ts
-  client/                       browser only, never imports src/server
-    env.ts                      public environment variables (9)
-    supabase.ts                 browser Supabase client (auth only)
-    session.tsx                 SessionProvider
-    plan.tsx                    PlanProvider
-    api.ts                      fetch wrapper, ApiError (6.3)
-    useApiQuery.ts
-    vocabulary.ts               vocabulary cache
+  server/                       server-only business logic; every file starts with import 'server-only'
+    env.ts, supabase.ts         validated environment variables (9); serverClient and recruiterClient (4.1)
+    auth.ts, http.ts, errors.ts the request pipeline (4.2 to 4.4)
+    log.ts                      request and search log lines (4.8)
+    plan.ts, people.ts, shortlists.ts, savedBriefs.ts   one file per feature
+    search/                     brief, vocabulary, filter schema, prompt, the Haiku call, run and paging (3)
+    billing/                    signature check, event schema, apply (5)
+  client/                       browser only, never imports src/server: Supabase auth client, session, plan, fetch wrapper
   components/                   one folder per component: Name.tsx + Name.module.css
-  shared/
-    types.ts                    request and response types, imported by client and server
+  shared/types.ts               request and response types, imported by client and server
 
-supabase/
-  config.toml                   (7.3)
-  migrations/                   (2.6)
-
-scripts/
-  seed.ts                       (7.4)
-  write-env.ts                  (7.5)
-  package.json                  {"type": "module"} so Node runs the scripts as ES modules
-  eval-search.ts                npm run eval:search
-  replay-stripe-events.ts       npm run replay:stripe: sends data/stripe-events.json to the running app
-
-tests/
-  integration/                  npm run test:integration: tenancy, quota, billing, hostile, latency
-  security/                     npm run check:secrets: built-bundle scan
-cypress/
-  e2e/                          the specs in TESTING.md
-  tour/                         npm run screenshots: every screen into docs/screenshots/
-  support/
-
-data/                           assessment data (committed) and extra-queries.json
-docs/
-  screenshots/                  README screenshots
-Makefile
-jest.config.ts                  unit tests: *.test.ts next to the file they test
-jest.integration.config.ts
-jest.security.config.ts         npm run check:secrets
-cypress.config.ts
-.github/workflows/ci.yml        typecheck, lint, unit tests, build and secret scan on pull requests
-.nvmrc
-.env.example                  variable names from section 9, no values
+supabase/                       config.toml (7.3) and migrations/ (2.6)
+scripts/                        seed (7.4), write-env (7.5), eval-search, replay-stripe-events
+tests/integration/              tests against the running app (TESTING.md)
+tests/security/                 built-bundle secret scan
+cypress/e2e/                    end-to-end specs; cypress/tour/ retakes the README screenshots
+data/                           assessment data and extra-queries.json
+docs/                           ARCHITECTURE, LLD, TESTING, IMPLEMENTATION_PLAN, screenshots/
 ```
 
 ## 9. Environment variables
