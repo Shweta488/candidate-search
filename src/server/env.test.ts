@@ -1,4 +1,4 @@
-import { getAnthropicApiKey, getSupabaseEnv } from "./env";
+import { getAnthropicApiKey, getStripeWebhookEnv, getSupabaseEnv } from "./env";
 
 const valid = {
   NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
@@ -30,5 +30,26 @@ describe("getAnthropicApiKey", () => {
   it("names the variable when it is missing or blank", () => {
     expect(() => getAnthropicApiKey({})).toThrow(/ANTHROPIC_API_KEY/);
     expect(() => getAnthropicApiKey({ ANTHROPIC_API_KEY: " " })).toThrow(/ANTHROPIC_API_KEY/);
+  });
+});
+
+describe("getStripeWebhookEnv", () => {
+  it("returns the secret as-is and no age check by default", () => {
+    expect(getStripeWebhookEnv({ STRIPE_WEBHOOK_SECRET: "whsec_x" })).toEqual({
+      secret: "whsec_x",
+      toleranceSeconds: undefined,
+    });
+  });
+
+  it("reads the optional tolerance", () => {
+    const env = getStripeWebhookEnv({ STRIPE_WEBHOOK_SECRET: "whsec_x", STRIPE_WEBHOOK_TOLERANCE_SECONDS: "300" });
+    expect(env.toleranceSeconds).toBe(300);
+  });
+
+  it("names the variable when the secret is missing or the tolerance is not a whole number", () => {
+    expect(() => getStripeWebhookEnv({})).toThrow(/STRIPE_WEBHOOK_SECRET/);
+    expect(() =>
+      getStripeWebhookEnv({ STRIPE_WEBHOOK_SECRET: "whsec_x", STRIPE_WEBHOOK_TOLERANCE_SECONDS: "5m" }),
+    ).toThrow(/STRIPE_WEBHOOK_TOLERANCE_SECONDS/);
   });
 });

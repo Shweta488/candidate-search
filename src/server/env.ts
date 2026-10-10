@@ -37,3 +37,22 @@ export function getAnthropicApiKey(source: Record<string, string | undefined> = 
   if (!key) throw new Error("Missing environment variable: ANTHROPIC_API_KEY. Export it before make dev.");
   return key;
 }
+
+export type StripeWebhookEnv = { secret: string; toleranceSeconds: number | undefined };
+
+// The webhook secret is read from the shell (make dev refuses to start without it). The age
+// check is off unless STRIPE_WEBHOOK_TOLERANCE_SECONDS is set (LLD 5.2).
+export function getStripeWebhookEnv(source: Record<string, string | undefined> = process.env): StripeWebhookEnv {
+  const secret = source.STRIPE_WEBHOOK_SECRET?.trim();
+  if (!secret) throw new Error("Missing environment variable: STRIPE_WEBHOOK_SECRET. Export it before make dev.");
+
+  const tolerance = source.STRIPE_WEBHOOK_TOLERANCE_SECONDS?.trim();
+  if (!tolerance) return { secret, toleranceSeconds: undefined };
+  const seconds = Number(tolerance);
+  if (!Number.isInteger(seconds) || seconds <= 0) {
+    throw new Error(
+      "Invalid environment variable: STRIPE_WEBHOOK_TOLERANCE_SECONDS must be a whole number of seconds.",
+    );
+  }
+  return { secret, toleranceSeconds: seconds };
+}
