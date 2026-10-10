@@ -47,7 +47,7 @@ export const EDITOR_LABELS: Record<FilterField, string> = {
 export type FilterValue = string | number | boolean;
 export type Tag = { field: FilterField; value: FilterValue; label: string; text: string };
 
-export function isListField(field: FilterField): field is ListField {
+function isListField(field: FilterField): field is ListField {
   return FIELDS[field].list !== undefined;
 }
 

@@ -18,7 +18,7 @@ async function allResults(filters: object, token: string): Promise<Result[]> {
   return results;
 }
 
-// Puts a before b the way the old ranking did: open to work, then experience, then id.
+// The order among equally close matches: open to work, then experience, then id.
 function tieBreak(a: Result, b: Result): number {
   return (
     Number(b.open_to_work) - Number(a.open_to_work) ||
@@ -56,12 +56,12 @@ describe("result order", () => {
     expect(matches).toEqual([...matches].sort((a, b) => b - a)); // never a 1 before a 2
     expect(matches).toContain(1);
 
-    // Within the same number of matches, the old order still applies.
+    // Within the same number of matches, the tie-break order applies.
     const both = results.filter((_, i) => matches[i] === 2);
     expect(both).toEqual([...both].sort(tieBreak));
   });
 
-  it("keeps the old order when the brief has no multi-value field", async () => {
+  it("uses only the tie-break order when the brief has no multi-value field", async () => {
     const results = await allResults({ roles: ["Backend Engineer"], cities: ["Austin"] }, token);
     expect(results.length).toBeGreaterThan(20);
     expect(results).toEqual([...results].sort(tieBreak));

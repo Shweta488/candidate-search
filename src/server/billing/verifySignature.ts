@@ -7,11 +7,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 // Header: t=<unix seconds>,v1=<hex>[,v1=<hex>...]. Stripe sends several v1 values while a
 // secret is being rolled, so any one matching is enough.
 
-export type SignatureFailure = "missing_header" | "bad_format" | "mismatch" | "too_old";
+type SignatureFailure = "missing_header" | "bad_format" | "mismatch" | "too_old";
 
-export type SignatureResult = { ok: true } | { ok: false; reason: SignatureFailure };
+type SignatureResult = { ok: true } | { ok: false; reason: SignatureFailure };
 
-export type SignatureInput = {
+type SignatureInput = {
   header: string | null;
   rawBody: string;
   secret: string;

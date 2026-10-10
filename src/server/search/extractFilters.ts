@@ -17,9 +17,9 @@ export const MODEL = "claude-haiku-5-5";
 const TOOL_NAME = "set_filters";
 
 // Token counts for the search log, which is where the cost per search is measured from.
-export type TokenUsage = { input: number; output: number; cacheRead: number; cacheWrite: number };
+type TokenUsage = { input: number; output: number; cacheRead: number; cacheWrite: number };
 
-export type Extraction = { filters: Filters; unsupported: string[]; usage: TokenUsage };
+type Extraction = { filters: Filters; unsupported: string[]; usage: TokenUsage };
 
 type MessagesClient = Pick<Anthropic, "messages">;
 

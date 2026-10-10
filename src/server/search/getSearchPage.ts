@@ -6,7 +6,7 @@ import { serverClient } from "../supabase";
 
 // One page of a stored search (LLD 3.7). Never spends a search and never calls the LLM.
 
-export const PAGE_SIZE = 20; // also fixed inside private.get_search_page
+const PAGE_SIZE = 20; // also fixed inside private.get_search_page
 
 export function totalPages(total: number): number {
   return Math.ceil(total / PAGE_SIZE);

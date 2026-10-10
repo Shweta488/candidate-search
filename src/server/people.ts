@@ -9,7 +9,7 @@ import { recruiterClient, serverClient } from "./supabase";
 // from the recruiter's own client, so RLS limits it to the recruiter's company.
 
 // The CandidateSummary columns (LLD 1.2), for result cards and shortlist members.
-export const SUMMARY_COLUMNS =
+const SUMMARY_COLUMNS =
   "id, full_name, headline, avatar_url, current_title, current_company, current_company_logo_url, " +
   "city, state, seniority, years_experience, open_to_work, skills";
 

@@ -9,7 +9,7 @@ import { logRequest } from "./log";
 
 type Params = Record<string, string | string[] | undefined>;
 
-export type RecruiterContext<P extends Params> = { recruiter: Recruiter; params: P; requestId: string };
+type RecruiterContext<P extends Params> = { recruiter: Recruiter; params: P; requestId: string };
 
 export function withRecruiter<P extends Params = Record<string, never>>(
   handler: (request: Request, context: RecruiterContext<P>) => Promise<Response>,
