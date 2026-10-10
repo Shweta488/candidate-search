@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
+import { usePlan } from "@/client/plan";
 import { useSession } from "@/client/session";
 import { Button } from "@/components/Button/Button";
 import { PlanPill } from "@/components/PlanPill/PlanPill";
@@ -14,10 +15,11 @@ const NAV = [
   { href: "/saved-searches", label: "Saved searches" },
 ];
 
-// On phones the links and Sign out move into a menu; the plan pill stays visible.
+// On phones the links, company name and Sign out move into a menu; the plan pill stays visible.
 export function AppHeader() {
   const pathname = usePathname();
   const { signOut } = useSession();
+  const companyName = usePlan().plan?.company_name;
   const [menu, setMenu] = useState<{ open: boolean; at: string }>({ open: false, at: pathname });
   const menuButton = useRef<HTMLButtonElement>(null);
   const open = menu.open && menu.at === pathname; // closes by itself after navigating
@@ -57,6 +59,7 @@ export function AppHeader() {
           {links}
         </nav>
         <div className={styles.end}>
+          {companyName && <span className={`${styles.company} ${styles.wide}`}>{companyName}</span>}
           <PlanPill />
           <Button variant="ghost" size="sm" className={styles.wide} onClick={() => void signOut()}>
             Sign out
@@ -76,6 +79,7 @@ export function AppHeader() {
       </div>
       {open && (
         <div id="phone-menu" className={`${styles.menu} ${styles.narrow}`}>
+          {companyName && <p className={styles.menuCompany}>{companyName}</p>}
           <nav aria-label="Main" className={styles.menuNav}>
             {links}
           </nav>

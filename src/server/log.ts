@@ -33,7 +33,10 @@ export type SearchLog = {
   sql_ms: number;
   total_ms: number;
   total: number;
+  input_tokens: number;
+  output_tokens: number;
   cache_read_input_tokens: number;
+  cache_creation_input_tokens: number;
 };
 
 export function logSearch(entry: SearchLog): void {

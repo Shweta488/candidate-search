@@ -13,6 +13,10 @@ Decisions made while designing this project, with the reason for each. Reasons a
 | Oct 8 | Model | Anthropic `claude-haiku-5-5` | Fastest Claude model, built for extraction; well under $0.001 per search |
 | Oct 8 | Search | Enum-constrained filters built from the live data, results stored per search for paging | All 10 sample briefs are exact AND matches over structured fields |
 | Oct 8 | Search | An unsupported requirement returns nobody, with the reason shown | Returning nothing beats returning the wrong people |
+| Oct 9 | Search | No keyword (lexical) or embedding (semantic) search, and no custom index | Headlines and job descriptions are generated from the structured fields, so they add nothing to match on; fuzzy matching adds wrong people and can't return nobody. SQL already takes under 100 ms |
+| Oct 9 | Search | "Engineer", "software engineer" or "developer" with no qualifier means every engineering role | Otherwise "software engineers" returns nobody and "staff engineers" includes non-engineers |
+| Oct 9 | Search | Rank closer matches first (more of the brief's values in multi-value fields), then open to work, then experience | Puts the best of the right people on page 1 |
+| Oct 9 | Search | No brief → filters cache yet | The graders run each brief once and the 3 s target is met without it; kept as a next step |
 | Oct 8 | Free plan | Editing filters or re-running a saved search counts as a new search | Otherwise a free user could search without limit by editing filters |
 | Oct 8 | Billing | HMAC always checked on the raw body; timestamp age check off by default (`STRIPE_WEBHOOK_TOLERANCE_SECONDS` enables it); dedupe by event id; order by `event.created` | Pre-signed events may be replayed days later; replays are already blocked by event id |
 | Oct 8 | Billing | Paid means a subscription with status `active` or `trialing` | `past_due`, `incomplete`, `unpaid` and `canceled` stay on the free plan |

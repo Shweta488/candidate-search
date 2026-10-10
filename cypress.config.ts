@@ -1,5 +1,6 @@
 // End-to-end tests against the running app (make setup, then make dev). See docs/TESTING.md.
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, renameSync, rmdirSync } from "node:fs";
+import { basename, join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { defineConfig } from "cypress";
 
@@ -73,7 +74,21 @@ export default defineConfig({
     // browser, so allow up to 10 s (Cypress's default is 4 s) before an element counts as missing.
     defaultCommandTimeout: 10_000,
     screenshotOnRunFailure: true,
-    setupNodeEvents(on) {
+    setupNodeEvents(on, config) {
+      // npm run screenshots: save as docs/screenshots/<name>.png, not in a folder per spec.
+      on("after:screenshot", (details) => {
+        if (!config.screenshotsFolder || !String(config.screenshotsFolder).endsWith("docs/screenshots")) return {};
+        const path = join(String(config.screenshotsFolder), basename(details.path));
+        renameSync(details.path, path);
+        return { path };
+      });
+      on("after:spec", () => {
+        const folder = String(config.screenshotsFolder ?? "");
+        if (!folder.endsWith("docs/screenshots")) return;
+        for (const entry of readdirSync(folder, { withFileTypes: true })) {
+          if (entry.isDirectory()) rmdirSync(join(folder, entry.name)); // the empty per-spec folder
+        }
+      });
       on("task", {
         // Gives a company its free search back, so a spec can run a real search.
         resetSearches: (company: string) => setSearchesUsed(company, 0),

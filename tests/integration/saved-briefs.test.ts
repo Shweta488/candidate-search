@@ -102,6 +102,7 @@ describe("saved searches", () => {
     expect((await api<PlanResponse>("/api/plan", token)).body).toEqual({
       plan: "free",
       searches_remaining: 0,
+      company_name: "Acme",
     });
   });
 

@@ -67,5 +67,55 @@
     "brief": "backend engineers who are fluent in Spanish and willing to relocate to London",
     "note": "unanswerable: language and a city not in the data, so nobody",
     "expected_ids": []
+  },
+  {
+    "brief": "software engineers in California",
+    "note": "umbrella job title: every engineering role",
+    "expected_filters": {
+      "roles": [
+        "Backend Engineer",
+        "Frontend Engineer",
+        "Full Stack Engineer",
+        "Mobile Engineer",
+        "Machine Learning Engineer",
+        "DevOps Engineer",
+        "Data Engineer"
+      ],
+      "states": ["CA"]
+    }
+  },
+  {
+    "brief": "senior engineers in Denver",
+    "note": "plain 'engineers' means the engineering roles, not product managers or recruiters",
+    "expected_filters": {
+      "roles": [
+        "Backend Engineer",
+        "Frontend Engineer",
+        "Full Stack Engineer",
+        "Mobile Engineer",
+        "Machine Learning Engineer",
+        "DevOps Engineer",
+        "Data Engineer"
+      ],
+      "seniorities": ["senior"],
+      "cities": ["Denver"]
+    }
+  },
+  {
+    "brief": "developers in Boston who are open to work",
+    "note": "'developers' with no technology in front means every engineering role",
+    "expected_filters": {
+      "roles": [
+        "Backend Engineer",
+        "Frontend Engineer",
+        "Full Stack Engineer",
+        "Mobile Engineer",
+        "Machine Learning Engineer",
+        "DevOps Engineer",
+        "Data Engineer"
+      ],
+      "cities": ["Boston"],
+      "open_to_work": true
+    }
   }
 ]

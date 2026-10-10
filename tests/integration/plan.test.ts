@@ -18,10 +18,13 @@ describe("GET /api/plan", () => {
     expect(status).toBe(401);
   });
 
-  it.each(Object.values(RECRUITERS))("returns the free plan with 1 search left for %s", async (email) => {
+  it.each([
+    [RECRUITERS.acme, "Acme"],
+    [RECRUITERS.globex, "Globex"],
+  ])("returns the free plan with 1 search left for %s, with their company's name", async (email, companyName) => {
     const { token } = await signIn(email);
     const { status, body } = await api("/api/plan", token);
     expect(status).toBe(200);
-    expect(body).toEqual({ plan: "free", searches_remaining: 1 });
+    expect(body).toEqual({ plan: "free", searches_remaining: 1, company_name: companyName });
   });
 });

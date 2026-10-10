@@ -139,6 +139,7 @@ describe("Stripe webhook", () => {
       expect((await api<PlanResponse>("/api/plan", tokens.globex)).body).toEqual({
         plan: "paid",
         searches_remaining: null,
+        company_name: "Globex",
       });
     });
 

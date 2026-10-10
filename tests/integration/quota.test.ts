@@ -22,6 +22,10 @@ describe("free plan under concurrency", () => {
     // Paging the one successful search still works and doesn't count as a search.
     const success = responses.find((r) => r.status === 200)!.body;
     expect((await api(`/api/search/${success.search_id}?page=2`, token)).status).toBe(200);
-    expect((await api<PlanResponse>("/api/plan", token)).body).toEqual({ plan: "free", searches_remaining: 0 });
+    expect((await api<PlanResponse>("/api/plan", token)).body).toEqual({
+      plan: "free",
+      searches_remaining: 0,
+      company_name: "Globex",
+    });
   });
 });

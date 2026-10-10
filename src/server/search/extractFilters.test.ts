@@ -52,7 +52,7 @@ describe("extractFilters", () => {
     await expect(extractFilters(brief, vocabulary, client)).resolves.toEqual({
       filters: { roles: ["Backend Engineer"], cities: ["Austin"], skills: ["Go"] },
       unsupported: ["Rust"],
-      cacheReadTokens: 900,
+      usage: { input: 10, output: 10, cacheRead: 900, cacheWrite: 0 },
     });
   });
 

@@ -16,7 +16,9 @@
     "e2e": "env -u ELECTRON_RUN_AS_NODE cypress run",
     "e2e:open": "env -u ELECTRON_RUN_AS_NODE cypress open",
     "eval:search": "node scripts/eval-search.ts",
-    "replay:stripe": "node scripts/replay-stripe-events.ts"
+    "replay:stripe": "node scripts/replay-stripe-events.ts",
+    "check:secrets": "jest --config jest.security.config.ts",
+    "screenshots": "env -u ELECTRON_RUN_AS_NODE cypress run --config specPattern=cypress/tour/**/*.cy.ts,screenshotsFolder=docs/screenshots,screenshotOnRunFailure=false"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.128.0",
@@ -35,6 +37,7 @@
     "axe-core": "4.13.0",
     "cypress": "15.21.1",
     "cypress-axe": "1.7.0",
+    "cypress-real-events": "1.15.1",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.8",
     "jest": "30.5.2",

@@ -3,14 +3,14 @@ import type { PlanResponse } from "@/shared/types";
 import { AppError } from "./errors";
 import { serverClient } from "./supabase";
 
-// The plan is derived on read by private.get_plan (LLD 4.6).
+// The plan is derived on read by private.get_plan (LLD 4.6), with the company name for the header.
 export async function getPlan(companyId: string): Promise<PlanResponse> {
   const { data, error } = await serverClient()
     .schema("private")
     .rpc("get_plan", { p_company_id: companyId })
     .single<PlanResponse>();
   if (error) throw error;
-  return { plan: data.plan, searches_remaining: data.searches_remaining };
+  return { plan: data.plan, searches_remaining: data.searches_remaining, company_name: data.company_name };
 }
 
 // Spends one search (LLD 4.6). Returns the searches left after this one, or null on the
