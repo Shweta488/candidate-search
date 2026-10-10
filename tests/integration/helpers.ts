@@ -14,7 +14,7 @@ function readEnvLocal(): Record<string, string> {
 const env = readEnvLocal();
 
 export const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
-export const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 export const PUBLISHABLE_KEY = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 export const PASSWORD = "demo-password";
 

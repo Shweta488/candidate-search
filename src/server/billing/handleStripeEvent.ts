@@ -2,7 +2,7 @@ import "server-only";
 import { serverClient } from "../supabase";
 import type { StripeEvent } from "./parseEvent";
 
-export type StripeEventOutcome = "applied" | "duplicate" | "stale" | "ignored";
+type StripeEventOutcome = "applied" | "duplicate" | "stale" | "ignored";
 
 // Records the event and updates the subscription in one transaction (LLD 5.4). The plan
 // itself is never stored: is_paid reads subscriptions on every request.

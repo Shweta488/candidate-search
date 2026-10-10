@@ -16,8 +16,8 @@ import type { PlanResponse, SavedBrief, SearchResponse } from "@/shared/types";
 import styles from "./saved-searches.module.css";
 
 // The company's saved searches, newest first (LLD 1.6, 6.5). Running one is a new search
-// with its brief and filters, so on the free plan the page says so first (product
-// decision 1). Deleting one asks first, in the page.
+// with its brief and filters, so on the free plan the page says so first
+// (ARCHITECTURE 7.1). Deleting one asks first, in the page.
 export function SavedSearchesView() {
   const { data, error, reload } = useApiQuery<{ saved_briefs: SavedBrief[] }>("/api/saved-briefs");
   const [status, setStatus] = useState("");

@@ -2,7 +2,7 @@ import "server-only";
 
 // One JSON line per request to stdout (LLD 4.8). Tokens, request bodies and briefs are never logged.
 
-export type RequestLog = {
+type RequestLog = {
   request_id: string;
   method: string;
   route: string;
@@ -25,7 +25,7 @@ export function logSignatureRejected(requestId: string, reason: string): void {
   console.warn(JSON.stringify({ type: "signature_rejected", request_id: requestId, reason }));
 }
 
-export type SearchLog = {
+type SearchLog = {
   request_id: string;
   search_id: string;
   company_id: string;

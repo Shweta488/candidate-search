@@ -1,7 +1,6 @@
 /* Design tokens (LLD 6.7). Components use only these variables. */
 :root {
   --font-ui: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-num: var(--font-geist-mono), ui-monospace, Menlo, monospace;
 
   --color-text: #18181b;
   --color-text-muted: #52525b;
@@ -11,6 +10,7 @@
   --color-border-strong: #71717a;
   --btn-bg: #18181b;
   --btn-hover: #3f3f46;
+  --btn-text: #ffffff;
   --color-primary: #2f5bea;
   --color-primary-soft: #eef2fe;
   --color-primary-tint: rgba(47, 91, 234, 0.1);
@@ -23,6 +23,8 @@
   --color-warning: #92400e;
   --color-warning-soft: #fff8eb;
   --color-warning-line: #f6ddb4;
+  --color-header: rgba(255, 255, 255, 0.6); /* frosted, over the page wash */
+  --color-backdrop: rgba(24, 24, 27, 0.4); /* behind a dialog */
   --color-skeleton: #ececee;
   --color-skeleton-shine: #f6f6f7;
 
@@ -30,6 +32,7 @@
   --text-lg: 1.125rem;
   --text-md: 1rem;
   --text-sm: 0.875rem;
+  --text-compact: 0.8125rem; /* 13 px: small buttons, tags, the plan pill */
   --text-xs: 0.75rem;
 
   --space-1: 4px;
@@ -39,7 +42,6 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
-  --space-8: 64px;
 
   --radius-sm: 7px;
   --radius-md: 12px;

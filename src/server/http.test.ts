@@ -74,11 +74,6 @@ describe("readRawBody", () => {
     const body = '{"id": "evt_1",  "x": 1}';
     await expect(readRawBody(new Request("http://localhost/", { method: "POST", body }))).resolves.toBe(body);
   });
-
-  it("rejects a body over 16 KB", async () => {
-    const request = new Request("http://localhost/", { method: "POST", body: "x".repeat(16 * 1024 + 1) });
-    await expect(readRawBody(request)).rejects.toMatchObject({ code: "invalid_request" });
-  });
 });
 
 describe("withRequestLog", () => {

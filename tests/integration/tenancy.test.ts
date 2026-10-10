@@ -1,5 +1,5 @@
 // Tenant isolation when a recruiter calls Supabase directly with their own token (LLD 2.4).
-// Grows with each story that adds company data (shortlists in S5, saved searches in S6).
+// Shortlists and saved searches have their own files: shortlist-tenancy and saved-brief-tenancy.
 import { anonClient, RECRUITERS, signIn } from "./helpers";
 
 describe("direct Supabase access", () => {

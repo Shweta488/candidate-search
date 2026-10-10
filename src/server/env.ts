@@ -10,7 +10,7 @@ const supabaseSchema = z.object({
   SUPABASE_SECRET_KEY: z.string().min(1),
 });
 
-export type SupabaseEnv = { url: string; publishableKey: string; secretKey: string };
+type SupabaseEnv = { url: string; publishableKey: string; secretKey: string };
 
 let supabaseEnv: SupabaseEnv | undefined;
 
@@ -38,7 +38,7 @@ export function getAnthropicApiKey(source: Record<string, string | undefined> = 
   return key;
 }
 
-export type StripeWebhookEnv = { secret: string; toleranceSeconds: number | undefined };
+type StripeWebhookEnv = { secret: string; toleranceSeconds: number | undefined };
 
 // The webhook secret is read from the shell (make dev refuses to start without it). The age
 // check is off unless STRIPE_WEBHOOK_TOLERANCE_SECONDS is set (LLD 5.2).

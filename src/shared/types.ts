@@ -63,8 +63,6 @@ export type CandidateSummary = {
   skills: string[];
 };
 
-export type SearchRequest = { brief: string; filters?: Filters };
-
 // One page of a stored search (GET /api/search/{id}).
 export type SearchPage = {
   search_id: string;

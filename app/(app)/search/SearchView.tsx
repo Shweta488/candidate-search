@@ -68,7 +68,7 @@ function Search() {
   const shown = showPosted ? posted : searchId ? query.data : undefined;
 
   // A new search. With filters (a corrected search) the server skips the LLM, but it
-  // still counts as a search (product decision 1).
+  // still counts as a search (ARCHITECTURE 7.1).
   async function search(brief: string, filters?: Filters) {
     setSearching(true);
     setPostError(null);

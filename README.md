@@ -2,16 +2,27 @@
 
 Recruiters describe who they want in plain English; Claude turns the brief into structured filters; Postgres finds and ranks the people.
 
-**Run it:** Docker Desktop running, Node 24, then `export ANTHROPIC_API_KEY=... STRIPE_WEBHOOK_SECRET=whsec_test_sample`, `make setup`, `make dev`, open http://localhost:3000. Sign in as `recruiter@acme.test` or `recruiter@globex.test` (password `demo-password`).
+## Run it
+
+Needs Docker Desktop running and Node 24.
+
+```
+export ANTHROPIC_API_KEY=sk-ant-...
+export STRIPE_WEBHOOK_SECRET=whsec_test_sample
+make setup
+make dev
+```
+
+Open http://localhost:3000 and sign in as `recruiter@acme.test` or `recruiter@globex.test` (password `demo-password`).
 
 ![Search results with editable filter tags](docs/screenshots/desktop-03-search-results.png)
 
 ## How to review (about 15 minutes)
 
-1. This page, then [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (requirements, API, high-level design, deep dives) and the diagrams in [docs/DIAGRAMS.md](docs/DIAGRAMS.md) (the request map shows every route).
+1. This page, then [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (requirements, API, high-level design, deep dives, decisions; the diagrams are inline, and the request map in section 3 shows every route).
 2. Core code, in this order: `supabase/migrations` (schema, RLS), `src/server/search` (LLM and SQL), `src/server/plan.ts` (free plan), `src/server/billing` (webhook), `app/api` (thin routes).
-3. Run the checks with the app running: `npm test` (unit), `npm run test:integration` (tenancy, free plan, billing, hostile briefs, latency), `npm run e2e` (Cypress), `npm run eval:search` (accuracy report), and `npm run build && npm run check:secrets` (with `make dev` stopped). Details in [docs/TESTING.md](docs/TESTING.md).
-4. Decisions and their reasons are in [docs/DECISIONS.md](docs/DECISIONS.md); the commit history follows [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md); working rules are in [RULES.md](RULES.md).
+3. Run the checks with the app running: `npm test` (unit), `npm run test:integration` (tenancy, free plan, billing, hostile briefs, latency), `npm run e2e` (Cypress), `npm run eval:search` (accuracy report), and `npm run build && npm run check:secrets` (with `make dev` stopped). `test:integration`, `e2e` and `eval:search` together call Claude about 40 times, a few cents. Details in [docs/TESTING.md](docs/TESTING.md).
+4. Decisions and their reasons are in [ARCHITECTURE.md section 7](docs/ARCHITECTURE.md#7-decisions); the commit history follows [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md); working rules are in [RULES.md](RULES.md).
 
 ## Screens
 
@@ -20,7 +31,7 @@ Recruiters describe who they want in plain English; Claude turns the brief into 
 | ![Couldn't filter on](docs/screenshots/desktop-08-unsupported.png) | ![Candidate](docs/screenshots/desktop-04-candidate.png) |
 | ![Shortlist](docs/screenshots/desktop-06-shortlist.png) | ![Upgrade dialog](docs/screenshots/desktop-10-upgrade-dialog.png) |
 
-On a phone: [results](docs/screenshots/phone-03-search-results.png), [candidate](docs/screenshots/phone-04-candidate.png), [saved searches](docs/screenshots/phone-07-saved-searches.png), [limit](docs/screenshots/phone-09-limit.png). Every screen is in [docs/screenshots](docs/screenshots); `npm run screenshots` takes them again from the running app.
+On a phone: [results](docs/screenshots/phone-03-search-results.png), [candidate](docs/screenshots/phone-04-candidate.png), [saved searches](docs/screenshots/phone-07-saved-searches.png), [limit](docs/screenshots/phone-09-limit.png). `npm run screenshots` takes them again from the running app.
 
 ## How search works
 
@@ -59,6 +70,8 @@ make reset               # back to the seed state
 - Results are stored per search: fast, stable paging at the cost of extra rows.
 - Webhook signatures are always checked, but the age check is off by default; replays are blocked by event id instead.
 - Candidates are readable only through the server, so the free limit cannot be bypassed through Supabase directly.
+
+Every decision and the alternatives considered are in [ARCHITECTURE.md](docs/ARCHITECTURE.md#7-decisions) sections 7 and 8.
 
 ## Troubleshooting
 

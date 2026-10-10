@@ -1,4 +1,4 @@
-// Unit tests: *.test.ts next to the file they test. Integration tests use jest.integration.config.ts (added with the first integration test).
+// Unit tests: *.test.ts next to the file they test. Integration tests use jest.integration.config.ts.
 import type { Config } from "jest";
 import nextJest from "next/jest.js";
 

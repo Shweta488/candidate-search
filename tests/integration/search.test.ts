@@ -32,11 +32,11 @@ describe("search and paging", () => {
     expect((await api<PlanResponse>("/api/plan", acme)).body.searches_remaining).toBe(1);
   });
 
+  // One invalid brief and one invalid body show the route maps both to 400; every other
+  // invalid input is a unit test (runSearch.test.ts, http.test.ts).
   it.each([
     ["an empty brief", { brief: "   " }],
-    ["a brief over 500 characters", { brief: "x".repeat(501) }],
     ["a body that isn't JSON", "brief=go"],
-    ["a body over 16 KB", { brief: "x", padding: "x".repeat(17_000) }],
   ])("rejects %s with a 400", async (_case, body) => {
     const { status } = await postJson("/api/search", body, acme);
     expect(status).toBe(400);

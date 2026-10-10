@@ -76,7 +76,7 @@ export const llmOutputSchema = z.object({
   unsupported: z.array(z.string()).optional(),
 });
 
-export type LlmOutput = z.infer<typeof llmOutputSchema>;
+type LlmOutput = z.infer<typeof llmOutputSchema>;
 
 // Keeps only values in the vocabulary; anything else goes to `unsupported`, so the
 // search returns nobody rather than ignoring part of the brief (LLD 3.4, 3.5).

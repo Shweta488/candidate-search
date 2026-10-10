@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 
 type Status = Record<string, string | undefined>;
 
-export type LocalSupabase = { url: string; publishableKey: string; secretKey: string };
+type LocalSupabase = { url: string; publishableKey: string; secretKey: string };
 
 export function readLocalSupabase(): LocalSupabase {
   const output = execFileSync("npx", ["supabase", "status", "-o", "json"], {

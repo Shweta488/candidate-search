@@ -1,7 +1,8 @@
-// Screenshots of every screen, for the README (desktop) and the mobile review (phone).
-// Run with npm run screenshots against make dev; files land in docs/screenshots/.
-// Not part of npm run e2e. Real data throughout; the one real search sends filters, so
-// nothing here calls Claude. Acme's lists and saved searches are replaced by demo ones.
+// Retakes the README's screenshots. Run with npm run screenshots against make dev; files
+// land in docs/screenshots/. Not part of npm run e2e. The spec walks every screen at both
+// sizes but saves only the shots in README_SHOTS; add a name there to keep another one.
+// Real data throughout; the one real search sends filters, so nothing here calls Claude.
+// Acme's lists and saved searches are replaced by demo ones.
 import { signIn } from "../support/helpers";
 
 const BRIEF = "senior React engineers in New York who have worked at a startup";
@@ -34,9 +35,22 @@ function apiPost(
   );
 }
 
+const README_SHOTS = new Set([
+  "desktop-03-search-results",
+  "desktop-04-candidate",
+  "desktop-06-shortlist",
+  "desktop-08-unsupported",
+  "desktop-10-upgrade-dialog",
+  "phone-03-search-results",
+  "phone-04-candidate",
+  "phone-07-saved-searches",
+  "phone-09-limit",
+]);
+
 for (const size of SIZES) {
   describe(`Screens (${size.name})`, () => {
     const shot = (name: string) => {
+      if (!README_SHOTS.has(`${size.name}-${name}`)) return;
       cy.wait(300); // let fonts and images settle
       cy.screenshot(`${size.name}-${name}`, { capture: size.capture, overwrite: true });
     };

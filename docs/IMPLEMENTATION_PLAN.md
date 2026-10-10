@@ -2,32 +2,7 @@
 
 The work is split into **stories**: each one delivers a feature end to end (database, API, UI and tests), so every merged story works. The design each story builds on is in [LLD.md](LLD.md).
 
-## How work flows
-
-Each story is one branch and one pull request:
-
-1. **Story plan.** Before any code, I post a short plan for the story: files, tests, and anything that differs from the LLD. **Review: plan.**
-2. I create the story branch from the latest `main` (for example `s2-search`), build it and run its checks.
-3. I show you the diff summary, check results and proposed commit messages. **Approval 1: commit.**
-4. I commit on the branch, in the order listed below.
-5. You review the commits locally. **Approval 2: push.**
-6. I push the branch and open a pull request with a description, how to test, and the check results.
-7. You review the PR on GitHub and merge it with **"Create a merge commit"** or **"Rebase and merge"**, never "Squash".
-8. The next story branches from the updated `main`.
-
-## Design (before any code)
-
-### M0 Architecture and data (merged)
-- `chore: add gitignore and recommended editor extensions`
-- `chore(data): add assessment data files`
-- `docs: add architecture, diagrams, rules and plans`
-
-### M0b Low-level design (branch `m0b-lld-ui-design`)
-- `docs: add low-level design`
-- `docs: align architecture, rules and diagrams with the LLD`
-- `docs: plan the work as stories with a UI design step`
-
-**UI design step.** Before S1, a visual mockup of the key screens (search with results and filter tags, its states, the candidate page, phone width), built with the tokens in LLD 6.7, is reviewed and approved. Stories with screens build to the approved mockup, and S1 turns the tokens into `app/globals.css`.
+Every story below is merged. How a story moves from plan to merge (plan review, branch, commit approval, push approval) is in [RULES.md](../RULES.md) section 1. Before S0, the architecture, the low-level design and a visual mockup of the key screens were written and reviewed.
 
 ## Stories
 
@@ -139,6 +114,21 @@ Branch `s8-hardening`.
   - `feat(ui): show the company name in the header and Upgrade dialog`
   - `style(ui): polish mobile layout and accessibility`
   - `docs: finalise README with screenshots, cost, tradeoffs and next steps`
+
+### S9 Faster search (no change)
+No branch merged. Thinking off and effort `low` were measured on the Claude request; neither made a search faster, so nothing changed. Result in ARCHITECTURE 7.2.
+
+### S10 Cleanup
+Branch `s10-cleanup`. No behaviour change.
+
+- **Done when:** docs are merged into fewer files with no stale text, comments say why, repeated tests and unused fonts, tokens, exports and screenshots are gone, and every check still passes.
+- **Commits:**
+  - `docs: move diagrams and decisions into the architecture doc`
+  - `docs: remove stale text from the plan, LLD and testing docs`
+  - `style(ui): remove unused font and tokens, use tokens for fixed values`
+  - `refactor: remove unused exports and tidy comments`
+  - `test: remove tests that repeat other tests`
+  - `docs: tidy README and delete unused screenshots`
 
 ## Risks
 
