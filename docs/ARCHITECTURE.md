@@ -348,7 +348,7 @@ sequenceDiagram
         API->>L: system rules + brief inside tags, forced tool call,<br/>tool schema whose values are enums from our data
         L-->>API: { filters, unsupported[] }
         API->>V: parse, values not in the vocabulary move to unsupported
-        alt LLM error or timeout (2.8 s)
+        alt LLM error or timeout (8 s, one retry)
             API->>Q: give the search credit back
             API-->>UI: 503 "Search is unavailable, try again"
         else valid
@@ -453,7 +453,7 @@ Secrets are never prefixed `NEXT_PUBLIC_`, server modules import `server-only`, 
 
 ### 6.7 Latency
 
-Paging is a primary-key read. A new search uses Haiku with a cached prompt, short output and a 2.8 s timeout; SQL takes under 100 ms (the broadest realistic search, 831 matches, finds, ranks and stores them in about 50 ms). Each search logs LLM, SQL and total time and its token counts. Measured on `make dev` (Oct 9): paging p95 74 ms; a new search 1.6 to 2.2 s end to end across all 25 eval briefs with a warm prompt cache, about 2.7 s with a cold one. Cost per search about $0.0003 warm, $0.0007 cold.
+Paging is a primary-key read. A new search uses Haiku with a cached prompt, short output and an 8 s timeout with one retry, far above the 3 s target so that a slow call still answers instead of failing with a 503; SQL takes under 100 ms (the broadest realistic search, 831 matches, finds, ranks and stores them in about 50 ms). Each search logs LLM, SQL and total time and its token counts. Measured on `make dev` (Oct 9): paging p95 74 ms; a new search 1.6 to 2.2 s end to end across all 25 eval briefs with a warm prompt cache, about 2.7 s with a cold one. Cost per search about $0.0003 warm, $0.0007 cold.
 
 ## 7. Decisions
 

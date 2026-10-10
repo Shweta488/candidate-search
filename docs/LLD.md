@@ -402,7 +402,7 @@ Every list value must be in the vocabulary (3.2). `min_years` must not exceed `m
 | `tools` | one tool, `set_filters`: the fields of 3.1, each list an enum of vocabulary values, plus `unsupported: string[]`; every field required (an empty list or `null` when the brief doesn't say); `additionalProperties: false`. Not `strict`: strict tool use made each call about 0.5 s slower, and 3.4 already checks every value |
 | `tool_choice` | `{ type: "tool", name: "set_filters" }` |
 | `max_tokens` | 512 |
-| `timeout` / `maxRetries` | 2,800 ms / 0, so a search ends within 3 s (NFR6) |
+| `timeout` / `maxRetries` | 8,000 ms / 1. Under 3 s is the target (NFR6), not a cut-off: a slow answer is better than a `503` |
 | prompt caching | `cache_control` on the static system prompt and tool |
 | `temperature` | not set (Haiku 5.5 accepts only the default) |
 
