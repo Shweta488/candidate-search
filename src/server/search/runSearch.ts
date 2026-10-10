@@ -61,7 +61,7 @@ export async function runSearch(companyId: string, body: SearchBody, requestId: 
     // 3. Brief to filters, unless the client sent them.
     const llmStarted = performance.now();
     const extraction = sentFilters
-      ? { filters: sentFilters, unsupported: [], cacheReadTokens: 0 }
+      ? { filters: sentFilters, unsupported: [], usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }
       : await extractFilters(body.brief, vocabulary);
     const llmMs = sentFilters ? 0 : Math.round(performance.now() - llmStarted);
 
@@ -94,7 +94,10 @@ export async function runSearch(companyId: string, body: SearchBody, requestId: 
       sql_ms: sqlMs,
       total_ms: Math.round(performance.now() - started),
       total: data.total,
-      cache_read_input_tokens: extraction.cacheReadTokens,
+      input_tokens: extraction.usage.input,
+      output_tokens: extraction.usage.output,
+      cache_read_input_tokens: extraction.usage.cacheRead,
+      cache_creation_input_tokens: extraction.usage.cacheWrite,
     });
 
     return { ...page, searches_remaining: searchesRemaining };

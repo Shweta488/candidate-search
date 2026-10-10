@@ -11,6 +11,8 @@ import { getVocabulary } from "./vocabulary";
 jest.mock("../plan", () => ({ spendSearchCredit: jest.fn(), refundSearchCredit: jest.fn() }));
 jest.mock("../supabase", () => ({ serverClient: jest.fn() }));
 jest.mock("./extractFilters", () => ({ extractFilters: jest.fn() }));
+
+const NO_TOKENS = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 jest.mock("./getSearchPage", () => ({ getSearchPage: jest.fn() }));
 jest.mock("./vocabulary", () => ({ getVocabulary: jest.fn() }));
 
@@ -50,7 +52,7 @@ beforeEach(() => {
   jest.mocked(spendSearchCredit).mockResolvedValue(0);
   jest.mocked(refundSearchCredit).mockResolvedValue();
   jest.mocked(getSearchPage).mockResolvedValue(page);
-  jest.mocked(extractFilters).mockResolvedValue({ filters: { skills: ["Go"] }, unsupported: [], cacheReadTokens: 0 });
+  jest.mocked(extractFilters).mockResolvedValue({ filters: { skills: ["Go"] }, unsupported: [], usage: NO_TOKENS });
   const single = jest.fn().mockResolvedValue({ data: { search_id: "s1", total: 1 }, error: null });
   rpc = jest.fn().mockReturnValue({ single });
   jest.mocked(serverClient).mockReturnValue({ schema: jest.fn().mockReturnValue({ rpc }) } as never);
@@ -71,7 +73,10 @@ describe("runSearch", () => {
 
   it("logs one search line without the brief", async () => {
     await runSearch("c1", { brief: "go engineers" }, "r1");
-    const line = jest.mocked(console.log).mock.calls.map((call) => String(call[0])).find((l) => l.includes('"search"'));
+    const line = jest
+      .mocked(console.log)
+      .mock.calls.map((call) => String(call[0]))
+      .find((l) => l.includes('"search"'));
     expect(JSON.parse(line ?? "{}")).toMatchObject({ type: "search", search_id: "s1", company_id: "c1", total: 1 });
     expect(line).not.toContain("go engineers");
   });
@@ -112,14 +117,14 @@ describe("runSearch", () => {
     jest.mocked(extractFilters).mockResolvedValue({
       filters: { roles: ["Backend Engineer"] },
       unsupported: ["speaks Japanese"],
-      cacheReadTokens: 0,
+      usage: NO_TOKENS,
     });
     await runSearch("c1", { brief: "backend engineers who speak Japanese" }, "r1");
     expect(runParams()).toMatchObject({ p_return_nobody: true, p_unsupported: ["speaks Japanese"] });
   });
 
   it("returns nobody when no filter was understood", async () => {
-    jest.mocked(extractFilters).mockResolvedValue({ filters: {}, unsupported: [], cacheReadTokens: 0 });
+    jest.mocked(extractFilters).mockResolvedValue({ filters: {}, unsupported: [], usage: NO_TOKENS });
     await runSearch("c1", { brief: "find me someone great" }, "r1");
     expect(runParams().p_return_nobody).toBe(true);
   });

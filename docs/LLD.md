@@ -463,7 +463,7 @@ private.run_search(
 3. No `filters` sent: `extractFilters` (3.3), then validate (3.4). LLM failure: `refund_search_credit`, `503`.
 4. Decide `return_nobody` (3.5).
 5. `run_search`, then `get_search_page` for page 1.
-6. Log one line: `search_id`, `company_id`, `llm_ms`, `sql_ms`, `total_ms`, `total`, `cache_read_input_tokens`.
+6. Log one line: `search_id`, `company_id`, `llm_ms`, `sql_ms`, `total_ms`, `total`, and the token counts `input_tokens`, `output_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens` (the cost per search is measured from these).
 
 If step 5 fails unexpectedly, the credit is given back and the API returns `500`.
 

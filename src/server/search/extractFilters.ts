@@ -16,7 +16,10 @@ import { SYSTEM_PROMPT } from "./prompt";
 export const MODEL = "claude-haiku-5-5";
 const TOOL_NAME = "set_filters";
 
-export type Extraction = { filters: Filters; unsupported: string[]; cacheReadTokens: number };
+// Token counts for the search log, which is where the cost per search is measured from.
+export type TokenUsage = { input: number; output: number; cacheRead: number; cacheWrite: number };
+
+export type Extraction = { filters: Filters; unsupported: string[]; usage: TokenUsage };
 
 type MessagesClient = Pick<Anthropic, "messages">;
 
@@ -73,6 +76,11 @@ export async function extractFilters(
 
   return {
     ...sanitizeLlmFilters(parsed.data, vocabulary),
-    cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+    usage: {
+      input: response.usage.input_tokens,
+      output: response.usage.output_tokens,
+      cacheRead: response.usage.cache_read_input_tokens ?? 0,
+      cacheWrite: response.usage.cache_creation_input_tokens ?? 0,
+    },
   };
 }
