@@ -761,7 +761,7 @@ Re-running a saved search from `/saved-searches` posts its brief and filters, th
 
 **Tokens**, as CSS variables in `app/globals.css`. Components use only these. Light theme only.
 
-**Fonts:** Geist for text, Geist Mono for numbers that line up (counts, years, page numbers), loaded with `next/font` so they are served by the app itself.
+**Font:** Geist, loaded with `next/font` so it is served by the app itself. Numbers that should line up use `font-variant-numeric: tabular-nums`.
 
 | Token | Value | Contrast |
 |---|---|---|
@@ -774,9 +774,9 @@ Re-running a saved search from `/saved-searches` posts its brief and filters, th
 | `--color-success` / `-soft` | `#157347` / `#ECFDF3` | 5.6:1 |
 | `--color-warning` / `-soft` | `#92400E` / `#FFF8EB` | 6.7:1 |
 | page wash | two faint radial gradients of `#E3EAFF` and `#E8F1FF` across the top of the page, fading into `--color-bg-page` | blue text 4.6:1 at the strongest point |
-| header | white at 60% opacity with an 8 px backdrop blur | |
-| type | 26 (h1, bold, -0.02em), 18, 16, 14, 12 px | |
-| space | 4, 8, 12, 16, 24, 32, 48, 64 px | |
+| header (`--color-header`) | white at 60% opacity with an 8 px backdrop blur | |
+| type | 26 (h1, bold, -0.02em), 18, 16, 14, 13 (small buttons, tags, plan pill), 12 px | |
+| space | 4, 8, 12, 16, 24, 32, 48 px | |
 | radius | 7 px (controls), 12 px (cards, menus, dialogs), full (filter tags, avatars, plan pill) | |
 
 Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide. Touch targets at least 44 px below 1024 px.

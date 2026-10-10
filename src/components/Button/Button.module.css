@@ -25,12 +25,12 @@
 .sm {
   min-height: 32px;
   padding: 0 var(--space-3);
-  font-size: 0.8125rem;
+  font-size: var(--text-compact);
 }
 
 .primary {
   background: var(--btn-bg);
-  color: #ffffff;
+  color: var(--btn-text);
 }
 
 .primary:hover:not(:disabled) {
@@ -49,7 +49,7 @@
 
 .danger {
   background: var(--color-danger);
-  color: #ffffff;
+  color: var(--btn-text);
 }
 
 .danger:hover:not(:disabled) {

@@ -4,7 +4,7 @@
   z-index: 10;
   border-bottom: 1px solid var(--color-border);
   /* Frosted header over the page wash (LLD 6.7). */
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--color-header);
   backdrop-filter: blur(8px);
 }
 
@@ -35,7 +35,7 @@
   height: 24px;
   border-radius: var(--radius-sm);
   background: var(--btn-bg);
-  color: #ffffff;
+  color: var(--btn-text);
   font-size: var(--text-xs);
 }
 
@@ -80,7 +80,7 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--btn-bg);
-  color: #ffffff;
+  color: var(--btn-text);
 }
 
 .skip:focus {
