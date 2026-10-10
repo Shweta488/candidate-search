@@ -943,6 +943,7 @@ cypress/
 
 data/                           assessment data (committed) and extra-queries.json
 docs/
+  screenshots/                  README screenshots
 Makefile
 jest.config.ts                  unit tests: *.test.ts next to the file they test
 jest.integration.config.ts
