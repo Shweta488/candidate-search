@@ -89,6 +89,29 @@ for (const viewport of VIEWPORTS) {
       cy.get("button[aria-label='Add Amara Cohen to a list']").should("be.focused");
     });
 
+    it("adds to a new list with the keyboard only", () => {
+      openResults();
+      cy.get("button[aria-label='Add Mei Haddad to a list']").focus();
+      cy.realPress("Enter");
+      cy.contains("You have no lists yet.").should("be.visible");
+      cy.realPress("Tab"); // the only item in the panel
+      cy.focused().should("have.text", "+ New list");
+      cy.realPress("Enter");
+      cy.focused()
+        .should("have.attr", "id")
+        .and("match", /-name$/); // the name field takes focus
+      cy.realType("Keyboard");
+      cy.realPress("Enter");
+      cy.contains("[role=status]", "Added to Keyboard").should("be.visible");
+      cy.focused().should("have.attr", "aria-label", "Add Mei Haddad to a list");
+    });
+
+    it("says when a list doesn't exist", () => {
+      cy.visit("/shortlists/6f1c6a8e-1d1b-4c55-9d8e-0a6b1f1f2c3d");
+      cy.contains("h2", "We couldn't find this list.").should("be.visible");
+      checkAccessibility();
+    });
+
     it("adds from the candidate page and shows On your lists", () => {
       createList("Backend");
       cy.visit("/people/cand_0001");

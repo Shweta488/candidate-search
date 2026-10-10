@@ -937,7 +937,8 @@ tests/
   integration/                  npm run test:integration: tenancy, quota, billing, hostile, latency
   security/                     npm run check:secrets: built-bundle scan
 cypress/
-  e2e/                          the 4 specs in TESTING.md
+  e2e/                          the specs in TESTING.md
+  tour/                         npm run screenshots: every screen into docs/screenshots/
   support/
 
 data/                           assessment data (committed) and extra-queries.json

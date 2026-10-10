@@ -38,7 +38,9 @@ Kept small, 4 specs, each run at desktop width and at 390 px:
 1. **Search and correct:** sign in, search, see the filter tags, remove one tag, results change; unsupported brief shows the "Couldn't filter on" note.
 2. **UI states:** `cy.intercept` forces slow, empty, error and 402 responses from `/api/search` to check the loading skeleton, empty state, retry and upgrade panel.
 3. **Shortlist and save:** add a candidate to a new list, rename and delete the list; save a search and re-run it.
-4. **Accessibility:** `cy.checkA11y()` on every screen (WCAG 2.1 AA rules), plus keyboard-only search and shortlist.
+4. **Accessibility:** `cy.checkA11y()` on every screen (WCAG 2.1 AA rules), plus a keyboard-only add-to-list flow with real key presses (`cypress-real-events`).
+
+`npm run screenshots` (`cypress/tour/screens.cy.ts`, not part of `npm run e2e`) captures every screen at desktop and phone width into `docs/screenshots/` for the README. It sends filters, so it calls no model.
 
 ## Manual checklist (final pass before the Loom)
 
