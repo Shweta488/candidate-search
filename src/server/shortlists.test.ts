@@ -62,11 +62,6 @@ describe("shortlists", () => {
     expect(query.insert).toHaveBeenCalledWith({ company_id: "c1", name: "A" });
   });
 
-  it("turns a duplicate name into 409 name_taken", async () => {
-    fakeDb({ data: null, error: { code: "23505" } });
-    await expect(createShortlist(recruiter, "A")).rejects.toMatchObject({ code: "name_taken", status: 409 });
-  });
-
   it("is not found for an id that isn't a uuid, without asking the database", async () => {
     const { from } = fakeDb();
     await expect(getShortlist(recruiter, "nope")).rejects.toMatchObject({ status: 404 });

@@ -1,5 +1,5 @@
 // Shortlist routes through the running app (LLD 1.5). Lists made here are deleted at the end.
-import type { ApiErrorBody, Candidate, SearchResponse, Shortlist, ShortlistSummary } from "@/shared/types";
+import type { Candidate, SearchResponse, Shortlist, ShortlistSummary } from "@/shared/types";
 import { adminClient, api, APP_URL, postJson, RECRUITERS, resetSearches, signIn } from "./helpers";
 
 const RUN = `test ${Date.now()}`;
@@ -58,10 +58,16 @@ describe("shortlists", () => {
     expect((await postJson("/api/shortlists", body, token)).status).toBe(400);
   });
 
-  it("refuses the same name in another case with a 409", async () => {
-    const { status, body } = await postJson<ApiErrorBody>("/api/shortlists", { name: `${RUN} FRONTEND` }, token);
-    expect(status).toBe(409);
-    expect(body.error).toEqual({ code: "name_taken", message: "You already have a list with this name." });
+  it("creates a second list with the same name, with its own id", async () => {
+    const name = `${RUN} frontend`;
+    const second = await postJson<{ id: string; name: string }>("/api/shortlists", { name }, token);
+    expect(second.status).toBe(201);
+    expect(second.body.name).toBe(name);
+    expect(second.body.id).not.toBe(listId);
+
+    const { body } = await api<{ shortlists: ShortlistSummary[] }>("/api/shortlists", token);
+    expect(body.shortlists.filter((list) => list.name === name)).toHaveLength(2);
+    await send("DELETE", `/api/shortlists/${second.body.id}`, token);
   });
 
   it("adds a person once, and says when they're already on the list", async () => {
@@ -121,9 +127,10 @@ describe("shortlists", () => {
     expect(body.members.map((m) => m.candidate.id)).toEqual(["cand_0629"]);
   });
 
-  it("renames, refusing a name already used", async () => {
+  it("renames, also to a name another list has", async () => {
     const other = await postJson<{ id: string }>("/api/shortlists", { name: `${RUN} backend` }, token);
-    expect((await send("PATCH", `/api/shortlists/${listId}`, token, { name: `${RUN} Backend` })).status).toBe(409);
+    const same = await send("PATCH", `/api/shortlists/${listId}`, token, { name: `${RUN} backend` });
+    expect(same).toEqual({ status: 200, body: { id: listId, name: `${RUN} backend` } });
     const renamed = await send("PATCH", `/api/shortlists/${listId}`, token, { name: `${RUN} react` });
     expect(renamed).toEqual({ status: 200, body: { id: listId, name: `${RUN} react` } });
     await send("DELETE", `/api/shortlists/${other.body.id}`, token);

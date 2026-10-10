@@ -21,7 +21,6 @@ describe("toErrorResponse", () => {
     ["unauthenticated", 401],
     ["search_limit_reached", 402],
     ["not_found", 404],
-    ["name_taken", 409],
     ["search_unavailable", 503],
   ] as const)("maps AppError %s to %i", async (code, expected) => {
     const { status, body } = await read(toErrorResponse(new AppError(code, "message"), "r1"));
@@ -38,7 +37,6 @@ describe("toErrorResponse", () => {
   });
 
   it.each([
-    ["23505", 409, "name_taken"],
     ["23503", 404, "not_found"],
     ["42501", 404, "not_found"],
   ])("maps Postgres code %s to %i", async (pgCode, expected, code) => {

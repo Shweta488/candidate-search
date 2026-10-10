@@ -481,6 +481,7 @@ Decisions made while designing and building, with the reason for each. Section 5
 | Oct 9 | Search | No brief → filters cache yet | The graders run each brief once and the 3 s target is met without it; kept as a next step |
 | Oct 9 | Free plan | Adding a filter to a search already run still counts as a new search, for now | Adding a filter only narrows results the recruiter was already given, so it could safely be free, but the server would have to prove the new filters are a strict narrowing of a stored search, and a mistake there is a free-plan bypass. Listed as a next step |
 | Oct 9 | UI | After Sign out, the next sign-in opens Search; a link opened while signed out still returns to its page | Signing out on one page and in as another company used to land on that page |
+| Oct 10 | Shortlists | Two lists may have the same name | The contract only asks that creating a list returns its `{ id }`, so a repeated name must not be an error; the list id, not the name, identifies a list |
 | Oct 9 | Search | The Claude request stays as it is: thinking off and effort `low` were both measured and neither made a search faster | Across 4 briefs the means were 1.81 s (as is), 1.85 s (thinking off) and 1.80 s (effort low), with the same filters. Most of the time is fixed per call, not output |
 
 ### 7.3 Facts from the data that shaped these decisions

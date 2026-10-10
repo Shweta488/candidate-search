@@ -19,7 +19,6 @@ Builds on [ARCHITECTURE.md](ARCHITECTURE.md).
 | 401 | `unauthenticated` | missing, expired or invalid token |
 | 402 | `search_limit_reached` | free plan has no searches left |
 | 404 | `not_found` | resource missing or another company's |
-| 409 | `name_taken` | shortlist name already used in this company |
 | 500 | `internal_error` | unexpected failure (details logged, never returned) |
 | 503 | `search_unavailable` | the LLM failed or timed out; the search credit was given back |
 
@@ -130,14 +129,14 @@ Errors: `400`, `401`, `404` (unknown id or another company's search).
 | Route | Request | Response | Errors |
 |---|---|---|---|
 | `GET /api/shortlists` | | `200 { "shortlists": [{ "id", "name", "member_count", "created_at" }] }`, newest first | 401 |
-| `POST /api/shortlists` | `{ "name" }` trimmed, 1 to 80 chars | `201 { "id", "name" }` | 400, 401, 409 |
+| `POST /api/shortlists` | `{ "name" }` trimmed, 1 to 80 chars | `201 { "id", "name" }` | 400, 401 |
 | `GET /api/shortlists/{shortlist_id}` | | `200 { "id", "name", "created_at", "members": [{ "added_at", "candidate": CandidateSummary }] }`, most recently added first | 401, 404 |
-| `PATCH /api/shortlists/{shortlist_id}` | `{ "name" }` | `200 { "id", "name" }` | 400, 401, 404, 409 |
+| `PATCH /api/shortlists/{shortlist_id}` | `{ "name" }` | `200 { "id", "name" }` | 400, 401, 404 |
 | `DELETE /api/shortlists/{shortlist_id}` | | `204`, members removed with it | 401, 404 |
 | `POST /api/shortlists/{shortlist_id}/people/{person_id}` | | `200 { "added": true }`, or `{ "added": false }` if already on the list (nothing changes) | 401, 404 (list or person) |
 | `DELETE /api/shortlists/{shortlist_id}/people/{person_id}` | | `204`, also when the person was not on the list | 401, 404 (list) |
 
-Shortlist names are unique per company, ignoring case.
+Two lists may have the same name; the id identifies a list.
 
 ### 1.6 Saved searches
 
@@ -239,7 +238,7 @@ Unique `(candidate_id, position)`.
 | `name` | `text` not null, `check (char_length(name) between 1 and 80)` | |
 | `created_at` | `timestamptz` | |
 
-Unique index on `(company_id, lower(name))` for the case-insensitive name rule.
+Index on `(company_id, created_at desc)` for listing newest first. Names are not unique.
 
 **`public.shortlist_members`**
 
@@ -523,7 +522,6 @@ Services throw `AppError(code, message)` from `src/server/errors.ts`. `toErrorRe
 |---|---|
 | `ZodError` | `400 invalid_request`, message names the first failing field |
 | `AppError` | its code, with the status from 1.1 |
-| Postgres `23505` (unique violation) on shortlist name | `409 name_taken` |
 | Postgres `23503` (foreign key) on a member's candidate | `404 not_found` |
 | Postgres `42501` (RLS write rule) | `404 not_found` |
 | anything else | `500 internal_error`; the error is logged with a request id, and only the request id is returned |
@@ -766,7 +764,6 @@ Re-running a saved search from `/saved-searches` posts its brief and filters, th
 | `402 search_limit_reached` | the limit panel with Upgrade, in place of results |
 | `404 not_found` | a not-found message for that page |
 | `400 invalid_request` | the message next to the input |
-| `409 name_taken` | "You already have a list with this name" next to the name field |
 | `503 search_unavailable` | error panel with Try again (copy in 6.7) |
 | `500` or `network_error` | "Something went wrong" with Retry |
 
