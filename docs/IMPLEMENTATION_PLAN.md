@@ -142,6 +142,22 @@ Branch `s11-ui-polish`. FR1, FR2, FR4, FR5. LLD 1.3, 3.7, 6.2, 6.5, 6.7. From a 
   - `style(ui): restyle the search box`
   - `docs: retake README screenshots and record the UI decisions`
 
+### S12 Submission fixes
+Branch `s12-submission-fixes`. NFR5, NFR6, FR4, FR5. LLD 1.1, 1.5, 1.6, 3.3, 5.3. From a final review against the assessment brief.
+
+- **Done when:** a slow Claude call answers instead of failing the search; the webhook returns 400 only for a bad signature; two shortlists can have the same name; saving a search accepts any filters object; the README is one page.
+- **Tests:** unit and integration for each change; Cypress for shortlists and saved searches; `eval:search` still 100%.
+- **Commits:**
+  - `perf(search): allow slow Claude calls instead of failing the search`
+  - `fix(billing): answer 200 for any correctly signed event`
+  - `fix(api): allow shortlists with the same name`
+  - `fix(api): ignore unknown keys when saving a search`
+  - `docs: cut README to one page and move review notes to docs/REVIEWING.md`
+  - `docs: align the LLD, architecture and testing docs with the code`
+  - `test: remove tests that repeat other tests`
+  - `fix(ui): keep a way back to results when the limit is reached`
+  - `style(ui): open a shortlist from anywhere on its tile`
+
 ## Risks
 
 | Risk | Mitigation |

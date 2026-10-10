@@ -12,14 +12,8 @@ import { recruiterClient } from "./supabase";
 export const ShortlistName = z.object({ name: z.string().trim().min(1).max(80) });
 
 const listNotFound = () => new AppError("not_found", "We couldn't find this list.");
-const nameTaken = () => new AppError("name_taken", "You already have a list with this name.");
 
 const isUuid = (id: string) => z.uuid().safeParse(id).success;
-
-// Postgres error code for a unique violation: the name is already used in this company.
-function isNameTaken(error: { code?: string } | null): boolean {
-  return error?.code === "23505";
-}
 
 export async function listShortlists(recruiter: Recruiter): Promise<ShortlistSummary[]> {
   const { data, error } = await recruiterClient(recruiter.token)
@@ -31,6 +25,7 @@ export async function listShortlists(recruiter: Recruiter): Promise<ShortlistSum
   return data.map(({ shortlist_members, ...list }) => ({ ...list, member_count: shortlist_members[0]?.count ?? 0 }));
 }
 
+// Names don't have to be unique: the id identifies a list.
 export async function createShortlist(recruiter: Recruiter, name: string): Promise<{ id: string; name: string }> {
   const { data, error } = await recruiterClient(recruiter.token)
     .from("shortlists")
@@ -38,7 +33,6 @@ export async function createShortlist(recruiter: Recruiter, name: string): Promi
     .insert({ company_id: recruiter.companyId, name })
     .select("id, name")
     .single<{ id: string; name: string }>();
-  if (isNameTaken(error)) throw nameTaken();
   if (error) throw error;
   return data;
 }
@@ -85,7 +79,6 @@ export async function renameShortlist(
     .eq("id", id)
     .select("id, name")
     .maybeSingle<{ id: string; name: string }>();
-  if (isNameTaken(error)) throw nameTaken();
   if (error) throw error;
   if (!data) throw listNotFound();
   return data;

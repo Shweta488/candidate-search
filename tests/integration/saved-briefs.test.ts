@@ -33,7 +33,7 @@ describe("saved searches", () => {
     expect(await remove("/api/saved-briefs/6f1c6a8e-1d1b-4c55-9d8e-0a6b1f1f2c3d", "")).toBe(401);
   });
 
-  it("saves a search and stores its filters cleaned", async () => {
+  it("saves a search and stores its filters cleaned, without keys it doesn't know", async () => {
     const first = await postJson<{ id: string }>(
       "/api/saved-briefs",
       {
@@ -42,6 +42,7 @@ describe("saved searches", () => {
           ...SAMPLE_FILTERS,
           cities: ["New York", "New York"],
           schools: [],
+          colour: ["blue"], // a key we don't know is left out, not rejected
         },
       },
       token,
@@ -63,10 +64,8 @@ describe("saved searches", () => {
     expect(status).toBe(200);
     const mine = body.saved_briefs.filter((s) => s.brief.startsWith(RUN));
     expect(mine.map((s) => s.id)).toEqual([secondId, firstId]);
-    expect(mine[1]).toMatchObject({
-      brief: `${RUN} react`,
-      filters: SAMPLE_FILTERS,
-    });
+    expect(mine[1].brief).toBe(`${RUN} react`);
+    expect(mine[1].filters).toEqual(SAMPLE_FILTERS); // exactly these: no repeats, empty lists or unknown keys
   });
 
   // The other invalid inputs are unit tests (savedBriefs.test.ts, filterSchema.test.ts).

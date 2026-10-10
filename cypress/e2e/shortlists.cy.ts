@@ -116,14 +116,12 @@ for (const viewport of VIEWPORTS) {
       );
     });
 
-    it("refuses a duplicate name and closes on Escape", () => {
-      createList("Frontend");
+    it("asks for a name and closes on Escape", () => {
       openResults();
       cy.get("button[aria-label='Add Amara Cohen to a list']").click();
       cy.contains("button", "+ New list").click();
-      cy.focused().type("frontend");
       cy.contains("button", "Create and add").click();
-      cy.get("[role=alert]").should("contain", "You already have a list with this name.");
+      cy.get("[role=alert]").should("contain", "Give the list a name.");
       checkAccessibility();
       cy.focused().type("{esc}");
       cy.contains("button", "+ New list").should("not.exist");
@@ -155,7 +153,7 @@ for (const viewport of VIEWPORTS) {
 
       cy.contains("h2", "Shortlists").should("be.visible");
       cy.get("ul[aria-labelledby=lists-glance] a").should("have.length", 2).first().should("contain", "Frontend");
-      cy.contains("a", "View all (3)").should("have.attr", "href", "/shortlists");
+      cy.contains("a", "View all (3) shortlists").should("have.attr", "href", "/shortlists");
       checkAccessibility();
 
       cy.contains("ul[aria-labelledby=lists-glance] a", "Design").click();
@@ -189,7 +187,8 @@ for (const viewport of VIEWPORTS) {
       cy.contains("[role=status]", "Added to Backend").should("be.visible");
 
       cy.visit("/shortlists");
-      cy.contains("li", "Backend").should("contain", "1 person").find("a").click();
+      // The whole tile opens the list, also a click in its padding, left of the name.
+      cy.contains("li", "Backend").should("contain", "1 person").click(8, 30);
       cy.title().should("eq", "Backend · Candidate Search");
       cy.get("article").should("have.length", 1).and("contain", "Mei Haddad");
       checkAccessibility();
@@ -204,9 +203,6 @@ for (const viewport of VIEWPORTS) {
       cy.contains("No one on this list yet.").should("be.visible");
 
       cy.contains("button", "Rename").click();
-      cy.get("input").clear().type("design");
-      cy.contains("button", "Save").click();
-      cy.get("[role=alert]").should("contain", "You already have a list with this name.");
       cy.get("input").clear().type("Backend team");
       cy.contains("button", "Save").click();
       cy.contains("h1", "Backend team").should("be.visible");

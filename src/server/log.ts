@@ -25,6 +25,11 @@ export function logSignatureRejected(requestId: string, reason: string): void {
   console.warn(JSON.stringify({ type: "signature_rejected", request_id: requestId, reason }));
 }
 
+// Why a correctly signed webhook event was not used. The caller still sees 200.
+export function logEventIgnored(requestId: string, reason: string): void {
+  console.warn(JSON.stringify({ type: "event_ignored", request_id: requestId, reason }));
+}
+
 type SearchLog = {
   request_id: string;
   search_id: string;

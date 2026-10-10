@@ -64,6 +64,23 @@
   text-decoration: underline;
 }
 
+/* The whole tile opens the list: the name's click area is stretched over it, like the
+   result cards. */
+.list {
+  position: relative;
+}
+
+.name::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  content: "";
+}
+
+.list:hover {
+  border-color: var(--color-border-strong);
+}
+
 .meta,
 .muted {
   margin: 0;

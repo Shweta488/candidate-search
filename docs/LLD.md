@@ -10,7 +10,7 @@ Builds on [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Format:** JSON in and out, `snake_case` keys (matches the brief's contract, for example `search_id`).
 - **Errors:** always `{ "error": { "code": "<machine_code>", "message": "<human sentence>" } }`.
 - **Not mine = not found:** a resource that belongs to another company returns `404`, never `403`, so the API never confirms it exists.
-- **Body size:** request bodies over 16 KB are rejected with `400`.
+- **Body size:** request bodies over 16 KB are rejected with `400`. The webhook accepts up to 1 MB, because a full Stripe event can be larger than 16 KB.
 - **Page size:** fixed at 20.
 
 | Status | `code` | When |
@@ -19,7 +19,6 @@ Builds on [ARCHITECTURE.md](ARCHITECTURE.md).
 | 401 | `unauthenticated` | missing, expired or invalid token |
 | 402 | `search_limit_reached` | free plan has no searches left |
 | 404 | `not_found` | resource missing or another company's |
-| 409 | `name_taken` | shortlist name already used in this company |
 | 500 | `internal_error` | unexpected failure (details logged, never returned) |
 | 503 | `search_unavailable` | the LLM failed or timed out; the search credit was given back |
 
@@ -130,21 +129,21 @@ Errors: `400`, `401`, `404` (unknown id or another company's search).
 | Route | Request | Response | Errors |
 |---|---|---|---|
 | `GET /api/shortlists` | | `200 { "shortlists": [{ "id", "name", "member_count", "created_at" }] }`, newest first | 401 |
-| `POST /api/shortlists` | `{ "name" }` trimmed, 1 to 80 chars | `201 { "id", "name" }` | 400, 401, 409 |
+| `POST /api/shortlists` | `{ "name" }` trimmed, 1 to 80 chars | `201 { "id", "name" }` | 400, 401 |
 | `GET /api/shortlists/{shortlist_id}` | | `200 { "id", "name", "created_at", "members": [{ "added_at", "candidate": CandidateSummary }] }`, most recently added first | 401, 404 |
-| `PATCH /api/shortlists/{shortlist_id}` | `{ "name" }` | `200 { "id", "name" }` | 400, 401, 404, 409 |
+| `PATCH /api/shortlists/{shortlist_id}` | `{ "name" }` | `200 { "id", "name" }` | 400, 401, 404 |
 | `DELETE /api/shortlists/{shortlist_id}` | | `204`, members removed with it | 401, 404 |
 | `POST /api/shortlists/{shortlist_id}/people/{person_id}` | | `200 { "added": true }`, or `{ "added": false }` if already on the list (nothing changes) | 401, 404 (list or person) |
 | `DELETE /api/shortlists/{shortlist_id}/people/{person_id}` | | `204`, also when the person was not on the list | 401, 404 (list) |
 
-Shortlist names are unique per company, ignoring case.
+Two lists may have the same name; the id identifies a list.
 
 ### 1.6 Saved searches
 
 | Route | Request | Response | Errors |
 |---|---|---|---|
 | `GET /api/saved-briefs` | | `200 { "saved_briefs": [{ "id", "brief", "filters", "created_at" }] }`, newest first | 401 |
-| `POST /api/saved-briefs` | `{ "brief", "filters" }`, filters validated like a search | `201 { "id" }` | 400, 401 |
+| `POST /api/saved-briefs` | `{ "brief", "filters" }`. `filters` is any JSON object: keys a search doesn't know are ignored and not stored, the known keys are validated like a search | `201 { "id" }` | 400, 401 |
 | `DELETE /api/saved-briefs/{id}` | | `204` | 401, 404 |
 
 Re-running a saved search is `POST /api/search` with its `brief` and `filters`.
@@ -164,7 +163,7 @@ Re-running a saved search is `POST /api/search` with its `brief` and `filters`.
 **`POST /api/billing/events`** (no recruiter token):
 
 - `400 { "error": { "code": "invalid_signature" } }` when the signature is missing or wrong.
-- Otherwise `200 { "received": true, "outcome": "applied" | "duplicate" | "stale" | "ignored" }`. `outcome` is for our logs and tests; Stripe only looks at the status code.
+- Otherwise `200 { "outcome": "applied" | "duplicate" | "stale" | "ignored" }`, also for a signed event we can't read (`ignored`). `outcome` is for our logs and tests; Stripe only looks at the status code.
 
 ## 2. Database
 
@@ -239,7 +238,7 @@ Unique `(candidate_id, position)`.
 | `name` | `text` not null, `check (char_length(name) between 1 and 80)` | |
 | `created_at` | `timestamptz` | |
 
-Unique index on `(company_id, lower(name))` for the case-insensitive name rule.
+Index on `(company_id, created_at desc)` for listing newest first. Names are not unique.
 
 **`public.shortlist_members`**
 
@@ -280,7 +279,7 @@ Index `(company_id, created_at desc)`.
 | `last_event_id` | `text` not null | tie-break for events in the same second (section 5) |
 | `updated_at` | `timestamptz` | |
 
-**`private.stripe_events`**: `id text` PK (the dedupe key), `type text`, `created bigint`, `outcome text check (in ('applied','stale','ignored'))`, `received_at`. Every verified event is recorded once, including ignored types.
+**`private.stripe_events`**: `id text` PK (the dedupe key), `type text`, `created bigint`, `outcome text check (in ('applied','stale','ignored'))`, `received_at`. Every verified event we can read is recorded once, including ignored types.
 
 ### 2.3 Indexes
 
@@ -353,6 +352,7 @@ Supabase CLI names, one file per plan commit:
 | `…_stripe_events.sql` (`apply_stripe_event`) | S7 |
 | `…_rank_closer_matches.sql` (`run_search` ranking, 3.6) | S8 |
 | `…_plan_company_name.sql` (`get_plan` returns `company_name`) | S8 |
+| `…_allow_duplicate_shortlist_names.sql` (drops the unique name index, adds the listing index) | S12 |
 
 Applied migrations are never edited after they are pushed (RULES.md section 3); changes go in a new file.
 
@@ -402,7 +402,7 @@ Every list value must be in the vocabulary (3.2). `min_years` must not exceed `m
 | `tools` | one tool, `set_filters`: the fields of 3.1, each list an enum of vocabulary values, plus `unsupported: string[]`; every field required (an empty list or `null` when the brief doesn't say); `additionalProperties: false`. Not `strict`: strict tool use made each call about 0.5 s slower, and 3.4 already checks every value |
 | `tool_choice` | `{ type: "tool", name: "set_filters" }` |
 | `max_tokens` | 512 |
-| `timeout` / `maxRetries` | 2,800 ms / 0, so a search ends within 3 s (NFR6) |
+| `timeout` / `maxRetries` | 8,000 ms / 1. Under 3 s is the target (NFR6), not a cut-off: a slow answer is better than a `503` |
 | prompt caching | `cache_control` on the static system prompt and tool |
 | `temperature` | not set (Haiku 5.5 accepts only the default) |
 
@@ -419,6 +419,8 @@ Two paths, one zod `Filters` schema built from the vocabulary:
 |---|---|
 | LLM output | moved into `unsupported` (so the search returns nobody, 3.5) |
 | `filters` sent by the client (correction, saved search) | `400 invalid_request`, before any credit is spent |
+
+A filter key that doesn't exist is a `400` on `POST /api/search`. `POST /api/saved-briefs` leaves such keys out and stores the rest (1.6).
 
 Empty lists are removed, so `{ skills: [] }` means no skill filter. `unsupported` is capped at 5 items of 80 characters each.
 
@@ -523,7 +525,6 @@ Services throw `AppError(code, message)` from `src/server/errors.ts`. `toErrorRe
 |---|---|
 | `ZodError` | `400 invalid_request`, message names the first failing field |
 | `AppError` | its code, with the status from 1.1 |
-| Postgres `23505` (unique violation) on shortlist name | `409 name_taken` |
 | Postgres `23503` (foreign key) on a member's candidate | `404 not_found` |
 | Postgres `42501` (RLS write rule) | `404 not_found` |
 | anything else | `500 internal_error`; the error is logged with a request id, and only the request id is returned |
@@ -591,10 +592,10 @@ Concurrent `spend_search_credit` calls for one company queue on the row lock; ea
 
 `POST /api/billing/events` does not use `withRecruiter`; `withRequestLog` gives it the same error handling and request log, with no company:
 
-1. Read the raw body with `await request.text()`.
+1. Read the raw body with `readRawBody(request, 1 MB)`.
 2. Verify the `Stripe-Signature` header against the raw body. Failure: `400 invalid_signature`.
-3. Only then `JSON.parse` and zod-validate the event.
-4. `billing.handleStripeEvent(event)` and return `200` with the outcome.
+3. Only then `JSON.parse` and zod-validate the event. Failure: log the reason and return `200` with `ignored`.
+4. `billing.handleStripeEvent(event)` and return `200` with the outcome. A database failure is a `500`, so Stripe sends the event again.
 
 The signature and event rules are in section 5.
 
@@ -628,9 +629,10 @@ Any failure: `400 invalid_signature`. The reason (missing header, bad format, mi
 
 After the signature passes, the raw body is parsed with zod:
 
-- Every event: `id` (string), `type` (string), `created` (integer). Missing: `400 invalid_request`.
-- `customer.subscription.created`, `.updated`, `.deleted` also need `data.object.id`, `data.object.status` and `data.object.metadata.company`. Missing: `400 invalid_request`.
+- Every event: `id` (string), `type` (string), `created` (integer).
+- `customer.subscription.created`, `.updated`, `.deleted` also need `data.object.id`, `data.object.status` and `data.object.metadata.company`.
 - Any other `type` is recorded as `ignored`.
+- A body that isn't JSON, or misses one of these fields, is answered `200` with `ignored` and is not recorded: the sender is Stripe, and a `400` would only make it send the same event again. The reason is logged (the field name, never the body).
 
 Status used: `canceled` for `.deleted`, otherwise `data.object.status`.
 
@@ -691,7 +693,7 @@ How the browser side is built, and the visual rules every screen follows (6.7).
 | `/search` | `app/(app)/search/page.tsx` | the start page: empty brief box, then the newest saved searches and shortlists, or example briefs |
 | `/search?id={search_id}&page={n}` | same page | loads that search with `GET /api/search/{id}`; refresh and back keep the results |
 | `/people/{id}` | `app/(app)/people/[id]/page.tsx` | |
-| `/shortlists` | `app/(app)/shortlists/page.tsx` | |
+| `/shortlists` | `app/(app)/shortlists/page.tsx` | one tile per list; the whole tile opens the list |
 | `/shortlists/{id}` | `app/(app)/shortlists/[id]/page.tsx` | |
 | `/saved-searches` | `app/(app)/saved-searches/page.tsx` | |
 
@@ -762,10 +764,9 @@ Re-running a saved search from `/saved-searches` posts its brief and filters, th
 | `ApiError` | Shown |
 |---|---|
 | `401` | redirect to sign-in (handled by `api.ts`) |
-| `402 search_limit_reached` | the limit panel with Upgrade, in place of results |
+| `402 search_limit_reached` | the limit panel with Upgrade, in place of results; when a search was on screen, also **Back to your results** |
 | `404 not_found` | a not-found message for that page |
 | `400 invalid_request` | the message next to the input |
-| `409 name_taken` | "You already have a list with this name" next to the name field |
 | `503 search_unavailable` | error panel with Try again (copy in 6.7) |
 | `500` or `network_error` | "Something went wrong" with Retry |
 
@@ -801,7 +802,7 @@ Breakpoints: phone below 640 px, desktop from 1024 px. Content max 1040 px wide.
 | No matches | "No candidates match all of these filters. Try removing a filter." |
 | Unsupported ask | "Couldn't filter on: {items}. We're showing nobody rather than the wrong people." Understood filters stay visible, with **Search without these** to run only them (a new search) |
 | No filters understood | "We couldn't find any requirement in that brief. Try a role, skill, location or seniority." |
-| `402` | "You've used your free search." + Upgrade. Paging and shortlisting earlier searches still work |
+| `402` | "You've used your free search." + Upgrade, and that shortlists and saved searches stay as they are. If a search was on screen when the limit was hit (edited filters, "Search without these" or a new brief), the message says its results are still there and **Back to your results** shows it again with its original filters |
 | `503` | "Search is unavailable right now. Your search wasn't used." + Try again |
 | `500`, network | "Something went wrong." + Try again |
 | No search yet, or `404` on `?id=` (an old or wrong link) | The start page, with no error message. With nothing saved: "Find the right people by describing them", one line on what happens, and three example briefs (clicking one fills the box without searching). With saved searches: straight to "Saved searches" and "Shortlists", each showing its 2 newest as tiles (a saved search opens the Saved searches page, a list opens that list) with "View all (n)" at the end of the row. On the free plan, how many searches are left |
@@ -911,9 +912,9 @@ supabase/                       config.toml (7.3) and migrations/ (2.6)
 scripts/                        seed (7.4), write-env (7.5), eval-search, replay-stripe-events
 tests/integration/              tests against the running app (TESTING.md)
 tests/security/                 built-bundle secret scan
-cypress/e2e/                    end-to-end specs; cypress/tour/ retakes the README screenshots
+cypress/e2e/                    end-to-end specs; cypress/tour/ retakes the screenshots in docs/
 data/                           assessment data and extra-queries.json
-docs/                           ARCHITECTURE, LLD, TESTING, IMPLEMENTATION_PLAN, screenshots/
+docs/                           ARCHITECTURE, LLD, TESTING, REVIEWING, IMPLEMENTATION_PLAN, screenshots/
 ```
 
 ## 9. Environment variables

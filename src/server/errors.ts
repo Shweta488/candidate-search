@@ -11,7 +11,6 @@ const STATUS: Record<ErrorCode, number> = {
   unauthenticated: 401,
   search_limit_reached: 402,
   not_found: 404,
-  name_taken: 409,
   internal_error: 500,
   search_unavailable: 503,
 };
@@ -34,7 +33,6 @@ export class AppError extends Error {
 // Postgres error codes that mean something to the API. 42501 is what an RLS write rule
 // raises on another company's row; answering 404 never confirms that the row exists.
 const POSTGRES_CODES: Record<string, { code: ErrorCode; message: string }> = {
-  "23505": { code: "name_taken", message: "That name is already in use." },
   "23503": { code: "not_found", message: "Not found." },
   "42501": { code: "not_found", message: "Not found." },
 };

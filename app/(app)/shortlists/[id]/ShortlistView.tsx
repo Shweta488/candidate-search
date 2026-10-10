@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { api, toApiError } from "@/client/api";
+import { api } from "@/client/api";
 import { peopleText } from "@/client/format";
 import { useApiQuery } from "@/client/useApiQuery";
 import { Button } from "@/components/Button/Button";
@@ -177,12 +177,8 @@ function RenameForm({ id, name, onDone }: { id: string; name: string; onDone: (r
     try {
       const list = await api.patch<{ name: string }>(`/api/shortlists/${encodeURIComponent(id)}`, { name: trimmed });
       onDone(list.name);
-    } catch (failure) {
-      setError(
-        toApiError(failure).code === "name_taken"
-          ? "You already have a list with this name."
-          : "Couldn't rename the list. Try again.",
-      );
+    } catch {
+      setError("Couldn't rename the list. Try again.");
       setBusy(false);
       requestAnimationFrame(() => input.current?.focus()); // back to the name, to fix it
     }

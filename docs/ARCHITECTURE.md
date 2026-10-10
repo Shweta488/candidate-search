@@ -185,11 +185,11 @@ Every recruiter route takes `Authorization: Bearer <supabase access token>`.
 | `GET /api/vocabulary` | allowed values for the filter editor | 401 |
 | `GET /api/people/:id` | candidate + experiences + education | 401, 404 |
 | `GET` / `POST /api/shortlists` | lists with counts / `{ id }` | 400, 401 |
-| `GET` / `PATCH` / `DELETE /api/shortlists/:id` | members / rename / delete | 401, 404 |
+| `GET` / `PATCH` / `DELETE /api/shortlists/:id` | members / rename / delete | 400 (rename), 401, 404 |
 | `POST` / `DELETE /api/shortlists/:id/people/:personId` | 200 (adding twice changes nothing) | 401, 404 |
 | `GET` / `POST /api/saved-briefs`, `DELETE /api/saved-briefs/:id` | list / `{ id }` / 204 | 400, 401, 404 |
 | `GET /api/plan` | `{ plan: "free" or "paid", searches_remaining: number or null, company_name }` | 401 |
-| `POST /api/billing/events` (no token) | 200, also for repeats and ignored types | 400 bad signature |
+| `POST /api/billing/events` (no token) | 200, also for repeats, ignored types and signed events we can't read | 400 bad signature |
 
 Another company's resource returns **404, not 403**, so the API never confirms it exists. Errors share one shape: `{ error: { code, message } }`.
 
@@ -348,7 +348,7 @@ sequenceDiagram
         API->>L: system rules + brief inside tags, forced tool call,<br/>tool schema whose values are enums from our data
         L-->>API: { filters, unsupported[] }
         API->>V: parse, values not in the vocabulary move to unsupported
-        alt LLM error or timeout (2.8 s)
+        alt LLM error or timeout (8 s, one retry)
             API->>Q: give the search credit back
             API-->>UI: 503 "Search is unavailable, try again"
         else valid
@@ -426,6 +426,9 @@ sequenceDiagram
         API-->>ST: 400 invalid_signature
     else valid
         API->>API: JSON.parse + zod (id, type, created, plus subscription fields for subscription events)
+        alt not JSON, or a field we need is missing
+            API-->>ST: 200 { outcome: ignored }, logged, nothing recorded
+        else readable
         API->>DB: event id, type, created, sub id, status, metadata.company
         DB->>DB: INSERT INTO stripe_events ON CONFLICT (id) DO NOTHING
         alt event id already seen (repeat)
@@ -441,6 +444,7 @@ sequenceDiagram
             end
         end
         API-->>ST: 200 { outcome }
+        end
     end
 
     Note over PL,DB: plan = 'paid' when any subscription of the company<br/>has status active or trialing, else 'free'.<br/>Computed on read, so it can never drift from the events.
@@ -453,7 +457,7 @@ Secrets are never prefixed `NEXT_PUBLIC_`, server modules import `server-only`, 
 
 ### 6.7 Latency
 
-Paging is a primary-key read. A new search uses Haiku with a cached prompt, short output and a 2.8 s timeout; SQL takes under 100 ms (the broadest realistic search, 831 matches, finds, ranks and stores them in about 50 ms). Each search logs LLM, SQL and total time and its token counts. Measured on `make dev` (Oct 9): paging p95 74 ms; a new search 1.6 to 2.2 s end to end across all 25 eval briefs with a warm prompt cache, about 2.7 s with a cold one. Cost per search about $0.0003 warm, $0.0007 cold.
+Paging is a primary-key read. A new search uses Haiku with a cached prompt, short output and an 8 s timeout with one retry, far above the 3 s target so that a slow call still answers instead of failing with a 503; SQL takes under 100 ms (the broadest realistic search, 831 matches, finds, ranks and stores them in about 50 ms). Each search logs LLM, SQL and total time and its token counts. Measured on `make dev` (Oct 9): paging p95 74 ms; a new search 1.6 to 2.2 s end to end across all 25 eval briefs with a warm prompt cache, about 2.7 s with a cold one. Cost per search about $0.0003 warm, $0.0007 cold.
 
 ## 7. Decisions
 
@@ -481,6 +485,7 @@ Decisions made while designing and building, with the reason for each. Section 5
 | Oct 9 | Search | No brief → filters cache yet | The graders run each brief once and the 3 s target is met without it; kept as a next step |
 | Oct 9 | Free plan | Adding a filter to a search already run still counts as a new search, for now | Adding a filter only narrows results the recruiter was already given, so it could safely be free, but the server would have to prove the new filters are a strict narrowing of a stored search, and a mistake there is a free-plan bypass. Listed as a next step |
 | Oct 9 | UI | After Sign out, the next sign-in opens Search; a link opened while signed out still returns to its page | Signing out on one page and in as another company used to land on that page |
+| Oct 10 | Shortlists | Two lists may have the same name | The contract only asks that creating a list returns its `{ id }`, so a repeated name must not be an error; the list id, not the name, identifies a list |
 | Oct 9 | Search | The Claude request stays as it is: thinking off and effort `low` were both measured and neither made a search faster | Across 4 briefs the means were 1.81 s (as is), 1.85 s (thinking off) and 1.80 s (effort low), with the same filters. Most of the time is fixed per call, not output |
 
 ### 7.3 Facts from the data that shaped these decisions

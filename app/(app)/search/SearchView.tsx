@@ -85,6 +85,12 @@ function Search() {
     }
   }
 
+  // After a failed new search, back to the results that were on screen, as they were.
+  function backToResults() {
+    setPostError(null);
+    setDraft(null);
+  }
+
   const inputError = postError?.error.status === 400 ? postError.error.message : undefined;
   // An old or mistyped link opens the same welcoming start page as a first visit.
   const missing = searchId !== null && isNotFound(query.error);
@@ -117,7 +123,12 @@ function Search() {
         {searching ? (
           <Searching />
         ) : failed ? (
-          <SearchFailed error={postError.error} onRetry={() => search(postError.brief, postError.filters)} />
+          <SearchFailed
+            error={postError.error}
+            onRetry={() => search(postError.brief, postError.filters)}
+            // The search that was on screen is still stored: closing the message shows it again.
+            onBack={shown ? backToResults : undefined}
+          />
         ) : starting ? null : searchId && !shown ? (
           query.error ? (
             <LoadFailed onRetry={query.reload} />
@@ -206,7 +217,7 @@ function Welcome({ onPick }: { onPick: (brief: string) => void }) {
       {plan?.plan === "free" && (
         <p className={styles.planNote}>
           {plan.searches_remaining === 0
-            ? "You've used your free search. You can still page through searches you've already run."
+            ? "You've used your free search. Upgrade to search again. Your shortlists and saved searches stay as they are."
             : `On the free plan you have ${plan.searches_remaining} ${
                 plan.searches_remaining === 1 ? "search" : "searches"
               }. Paging through its results doesn't use another.`}
@@ -456,11 +467,27 @@ function candidateHref(candidateId: string, page: SearchPage): string {
 }
 
 // A new search failed (LLD 6.6, 6.7).
-function SearchFailed({ error, onRetry }: { error: ApiError; onRetry: () => void }) {
+function SearchFailed(props: { error: ApiError; onRetry: () => void; onBack?: () => void }) {
+  const { error, onRetry, onBack } = props;
   if (error.code === "search_limit_reached") {
     return (
-      <StatePanel tone="limit" title="You've used your free search." action={<UpgradeButton />}>
-        You can still page through the searches you&apos;ve already run.
+      <StatePanel
+        tone="limit"
+        title="You've used your free search."
+        action={
+          <div className={styles.panelAction}>
+            <UpgradeButton />
+            {onBack && (
+              <Button variant="secondary" onClick={onBack}>
+                Back to your results
+              </Button>
+            )}
+          </div>
+        }
+      >
+        {onBack
+          ? "Your earlier results are still here: you can page through them, save the search and add people to lists."
+          : "Upgrade to search again. Your shortlists and saved searches stay as they are."}
       </StatePanel>
     );
   }

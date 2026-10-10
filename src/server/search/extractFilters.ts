@@ -9,8 +9,8 @@ import { SYSTEM_PROMPT } from "./prompt";
 // Brief to filters with Claude Haiku (LLD 3.3). One forced call to a tool whose fields
 // are enums of vocabulary values. No candidate data is ever sent.
 //
-// Strict tool use is off: it made each call about 0.5 s slower, and searches must finish
-// within 3 s. It isn't needed for safety, because llmOutputSchema and sanitizeLlmFilters
+// Strict tool use is off: it made each call about 0.5 s slower, and the target for a
+// search is under 3 s. It isn't needed for safety, because llmOutputSchema and sanitizeLlmFilters
 // check every value and move anything unknown to `unsupported`.
 
 export const MODEL = "claude-haiku-5-5";
@@ -26,9 +26,10 @@ type MessagesClient = Pick<Anthropic, "messages">;
 let client: MessagesClient | undefined;
 
 function defaultClient(): MessagesClient {
-  // Searches must finish within 3 s, so one attempt with a short timeout; a failure
-  // gives the search back instead of making the recruiter wait.
-  client ??= new Anthropic({ apiKey: getAnthropicApiKey(), timeout: 2_800, maxRetries: 0 });
+  // The target is under 3 s, and a normal call takes about 2 s. The timeout is much longer
+  // on purpose: a slow answer is still an answer, while a 503 gives the recruiter nothing.
+  // One retry covers a dropped connection or a brief overload at Anthropic.
+  client ??= new Anthropic({ apiKey: getAnthropicApiKey(), timeout: 8_000, maxRetries: 1 });
   return client;
 }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { api, toApiError } from "@/client/api";
+import { api } from "@/client/api";
 import { peopleText, shortDate } from "@/client/format";
 import { useApiQuery } from "@/client/useApiQuery";
 import { Button } from "@/components/Button/Button";
@@ -75,12 +75,8 @@ function CreateList({ onCreated }: { onCreated: () => void }) {
       setName("");
       setStatus(`Created ${list.name}`);
       onCreated();
-    } catch (failure) {
-      setError(
-        toApiError(failure).code === "name_taken"
-          ? "You already have a list with this name."
-          : "Couldn't create the list. Try again.",
-      );
+    } catch {
+      setError("Couldn't create the list. Try again.");
       requestAnimationFrame(() => input.current?.focus()); // back to the name, to fix it
     } finally {
       setBusy(false);

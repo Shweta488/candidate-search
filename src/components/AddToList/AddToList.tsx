@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { api, toApiError } from "@/client/api";
+import { api } from "@/client/api";
 import type { ShortlistSummary } from "@/shared/types";
 import { Button } from "../Button/Button";
 import styles from "./AddToList.module.css";
@@ -103,12 +103,8 @@ export function AddToList({ candidateId, candidateName, listIds = [], listNames 
     try {
       const list = await api.post<{ id: string; name: string }>("/api/shortlists", { name });
       await add(list);
-    } catch (error) {
-      setFormError(
-        toApiError(error).code === "name_taken"
-          ? "You already have a list with this name."
-          : "Couldn't create the list. Try again.",
-      );
+    } catch {
+      setFormError("Couldn't create the list. Try again.");
       setBusy(false);
       nameInput.current?.focus(); // back to the name, to fix it
     }

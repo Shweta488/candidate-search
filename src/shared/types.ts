@@ -5,7 +5,6 @@ export type ErrorCode =
   | "unauthenticated"
   | "search_limit_reached"
   | "not_found"
-  | "name_taken"
   | "internal_error"
   | "search_unavailable"
   | "invalid_signature";
