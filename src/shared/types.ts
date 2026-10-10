@@ -63,6 +63,9 @@ export type CandidateSummary = {
   skills: string[];
 };
 
+// A search result: the summary, plus the caller's company's lists this candidate is on.
+export type SearchResult = CandidateSummary & { shortlist_ids: string[] };
+
 // One page of a stored search (GET /api/search/{id}).
 export type SearchPage = {
   search_id: string;
@@ -73,7 +76,7 @@ export type SearchPage = {
   page_size: number;
   total: number;
   total_pages: number;
-  results: CandidateSummary[];
+  results: SearchResult[];
 };
 
 // POST /api/search: page 1 of the new search, plus the searches left (null on the paid plan).

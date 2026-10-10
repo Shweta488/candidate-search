@@ -13,6 +13,7 @@ jest.mock("../supabase", () => ({ serverClient: jest.fn() }));
 jest.mock("./extractFilters", () => ({ extractFilters: jest.fn() }));
 
 const NO_TOKENS = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+const recruiter = { userId: "u1", companyId: "c1", token: "t" };
 jest.mock("./getSearchPage", () => ({ getSearchPage: jest.fn() }));
 jest.mock("./vocabulary", () => ({ getVocabulary: jest.fn() }));
 
@@ -64,15 +65,18 @@ const runParams = () => rpc.mock.calls[0][1];
 
 describe("runSearch", () => {
   it("spends a search, extracts filters, runs and returns page 1 with the searches left", async () => {
-    await expect(runSearch("c1", { brief: "go engineers" }, "r1")).resolves.toEqual({ ...page, searches_remaining: 0 });
+    await expect(runSearch(recruiter, { brief: "go engineers" }, "r1")).resolves.toEqual({
+      ...page,
+      searches_remaining: 0,
+    });
     expect(spendSearchCredit).toHaveBeenCalledWith("c1");
     expect(rpc).toHaveBeenCalledWith("run_search", expect.objectContaining({ p_company_id: "c1", p_skills: ["Go"] }));
     expect(runParams().p_return_nobody).toBe(false);
-    expect(getSearchPage).toHaveBeenCalledWith("c1", "s1", 1);
+    expect(getSearchPage).toHaveBeenCalledWith(recruiter, "s1", 1);
   });
 
   it("logs one search line without the brief", async () => {
-    await runSearch("c1", { brief: "go engineers" }, "r1");
+    await runSearch(recruiter, { brief: "go engineers" }, "r1");
     const line = jest
       .mocked(console.log)
       .mock.calls.map((call) => String(call[0]))
@@ -82,13 +86,15 @@ describe("runSearch", () => {
   });
 
   it("uses filters sent by the client without calling the LLM", async () => {
-    await runSearch("c1", { brief: "go engineers", filters: { cities: ["Austin"] } }, "r1");
+    await runSearch(recruiter, { brief: "go engineers", filters: { cities: ["Austin"] } }, "r1");
     expect(extractFilters).not.toHaveBeenCalled();
     expect(runParams()).toMatchObject({ p_cities: ["Austin"], p_skills: null, p_unsupported: [] });
   });
 
   it("rejects unknown client filters with a 400 before spending a search", async () => {
-    const error = await runSearch("c1", { brief: "x", filters: { skills: ["Rust"] } }, "r1").catch((e: unknown) => e);
+    const error = await runSearch(recruiter, { brief: "x", filters: { skills: ["Rust"] } }, "r1").catch(
+      (e: unknown) => e,
+    );
     expect(error).toBeInstanceOf(ZodError);
     expect((error as ZodError).issues[0]?.path).toEqual(["filters", "skills", 0]);
     expect(spendSearchCredit).not.toHaveBeenCalled();
@@ -96,20 +102,20 @@ describe("runSearch", () => {
 
   it("does not call the LLM when the free search is used up", async () => {
     jest.mocked(spendSearchCredit).mockRejectedValue(new AppError("search_limit_reached", "Used."));
-    await expect(runSearch("c1", { brief: "go engineers" }, "r1")).rejects.toMatchObject({ status: 402 });
+    await expect(runSearch(recruiter, { brief: "go engineers" }, "r1")).rejects.toMatchObject({ status: 402 });
     expect(extractFilters).not.toHaveBeenCalled();
   });
 
   it("gives the search back when the LLM fails", async () => {
     jest.mocked(extractFilters).mockRejectedValue(new AppError("search_unavailable", "Unavailable."));
-    await expect(runSearch("c1", { brief: "go engineers" }, "r1")).rejects.toMatchObject({ status: 503 });
+    await expect(runSearch(recruiter, { brief: "go engineers" }, "r1")).rejects.toMatchObject({ status: 503 });
     expect(refundSearchCredit).toHaveBeenCalledWith("c1");
     expect(rpc).not.toHaveBeenCalled();
   });
 
   it("gives the search back when the database fails", async () => {
     rpc.mockReturnValue({ single: jest.fn().mockResolvedValue({ data: null, error: { code: "XX000" } }) });
-    await expect(runSearch("c1", { brief: "go engineers" }, "r1")).rejects.toMatchObject({ code: "XX000" });
+    await expect(runSearch(recruiter, { brief: "go engineers" }, "r1")).rejects.toMatchObject({ code: "XX000" });
     expect(refundSearchCredit).toHaveBeenCalledWith("c1");
   });
 
@@ -119,13 +125,13 @@ describe("runSearch", () => {
       unsupported: ["speaks Japanese"],
       usage: NO_TOKENS,
     });
-    await runSearch("c1", { brief: "backend engineers who speak Japanese" }, "r1");
+    await runSearch(recruiter, { brief: "backend engineers who speak Japanese" }, "r1");
     expect(runParams()).toMatchObject({ p_return_nobody: true, p_unsupported: ["speaks Japanese"] });
   });
 
   it("returns nobody when no filter was understood", async () => {
     jest.mocked(extractFilters).mockResolvedValue({ filters: {}, unsupported: [], usage: NO_TOKENS });
-    await runSearch("c1", { brief: "find me someone great" }, "r1");
+    await runSearch(recruiter, { brief: "find me someone great" }, "r1");
     expect(runParams().p_return_nobody).toBe(true);
   });
 });

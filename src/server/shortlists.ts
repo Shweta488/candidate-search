@@ -137,3 +137,23 @@ export async function removeMember(recruiter: Recruiter, id: string, candidateId
     .eq("candidate_id", candidateId);
   if (error) throw error;
 }
+
+// Which of the recruiter's lists each of these candidates is on, for result cards.
+// Read as the recruiter, so RLS limits it to their company's lists.
+export async function shortlistIdsByCandidate(
+  recruiter: Recruiter,
+  candidateIds: string[],
+): Promise<Map<string, string[]>> {
+  const byCandidate = new Map<string, string[]>();
+  if (candidateIds.length === 0) return byCandidate;
+  const { data, error } = await recruiterClient(recruiter.token)
+    .from("shortlist_members")
+    .select("candidate_id, shortlist_id")
+    .in("candidate_id", candidateIds)
+    .returns<{ candidate_id: string; shortlist_id: string }[]>();
+  if (error) throw error;
+  for (const row of data) {
+    byCandidate.set(row.candidate_id, [...(byCandidate.get(row.candidate_id) ?? []), row.shortlist_id]);
+  }
+  return byCandidate;
+}

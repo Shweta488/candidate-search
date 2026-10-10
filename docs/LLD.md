@@ -95,7 +95,7 @@ Response `200`:
   "page": 1,
   "page_size": 20,
   "total_pages": 2,
-  "results": [ "CandidateSummary × up to 20, best first" ],
+  "results": [ "CandidateSummary + shortlist_ids × up to 20, best first" ],
   "searches_remaining": 0
 }
 ```
@@ -114,8 +114,10 @@ Response `200`:
 { "search_id": "6f1c…", "brief": "senior React engineers in New York who have worked at a startup",
   "filters": { "...": "as in POST" }, "unsupported": [],
   "page": 2, "page_size": 20, "total": 21, "total_pages": 2,
-  "results": [ "CandidateSummary × 1" ] }
+  "results": [ "CandidateSummary + shortlist_ids × 1" ] }
 ```
+
+Each result in both responses is a `CandidateSummary` plus `shortlist_ids`: the caller's company's shortlists this candidate is on (`[]` if none), so a result card can say who is already shortlisted.
 
 Errors: `400`, `401`, `404` (unknown id or another company's search).
 
@@ -451,6 +453,8 @@ private.run_search(
 
 `private.get_search_page(p_company_id, p_search_id, p_page)` reads ranks `(p_page - 1) * 20 + 1` to `p_page * 20` from `search_results`, joined to `candidates` for the `CandidateSummary` columns, filtered by `searches.company_id = p_company_id`. It also returns the search's `brief`, `filters`, `unsupported` and `total`.
 
+`getSearchPage` then reads `shortlist_members` for that page's candidate ids with the recruiter client (one query, under RLS) and adds `shortlist_ids` to each result. Candidates and searches stay server-only; only the list membership is read as the recruiter.
+
 - No `searches` row for this company: `404`.
 - Row exists but no results on that page: `200` with `results: []`.
 
@@ -530,8 +534,8 @@ Services translate Supabase errors into `AppError` where they know the meaning; 
 
 | Route | Service function | Client |
 |---|---|---|
-| `POST /api/search` | `search.runSearch` | server |
-| `GET /api/search/{id}` | `search.getSearchPage` | server |
+| `POST /api/search` | `search.runSearch` | server for the search, recruiter for `shortlist_ids` |
+| `GET /api/search/{id}` | `search.getSearchPage` | server for the page, recruiter for `shortlist_ids` |
 | `GET /api/vocabulary` | `search.getVocabulary` | server |
 | `GET /api/people/{id}` | `people.getCandidate` | server for the candidate, recruiter for `shortlist_ids` |
 | `GET /api/shortlists` | `shortlists.listShortlists` | recruiter |

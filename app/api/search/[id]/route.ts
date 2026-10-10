@@ -17,5 +17,5 @@ const PageQuery = z.object({
 export const GET = withRecruiter<{ id: string }>(async (request, { recruiter, params }) => {
   const page = new URL(request.url).searchParams.get("page");
   const query = parseParams({ page: page ?? undefined }, PageQuery);
-  return json(await getSearchPage(recruiter.companyId, params.id, query.page));
+  return json(await getSearchPage(recruiter, params.id, query.page));
 });
