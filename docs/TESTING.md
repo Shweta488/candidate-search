@@ -10,8 +10,8 @@ Each grading area gets an automated check that runs against the real local stack
 | Integration | Jest (separate config) | `npm run test:integration` | `make setup` + `make dev` | tenancy, free-plan concurrency, billing replay, hostile briefs, latency |
 | End-to-end | Cypress + `cypress-axe` | `npm run e2e` | `make setup` + `make dev` | the main user flows on desktop and phone, UI states, accessibility |
 | Search accuracy | TypeScript script | `npm run eval:search` | full stack + model key | precision, recall and page-1 precision per brief |
-| Secret scan | Jest test after `next build` | `npm run check:secrets` | a build | no secret key, model key or their prefixes in `.next/static` or HTML |
-| CI | GitHub Actions | on every PR | nothing | typecheck, lint, unit tests |
+| Secret scan | Jest test after `next build` | `npm run check:secrets` | a build | no secret key, model key, webhook secret or key-shaped string, and no server-only code (Anthropic host, system prompt), in `.next/static` or the prerendered HTML |
+| CI | GitHub Actions | on every PR | nothing | typecheck, lint, unit tests, `next build`, secret scan |
 
 ## Integration tests (Jest)
 

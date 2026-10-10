@@ -942,8 +942,9 @@ docs/
 Makefile
 jest.config.ts                  unit tests: *.test.ts next to the file they test
 jest.integration.config.ts
+jest.security.config.ts         npm run check:secrets
 cypress.config.ts
-.github/workflows/ci.yml        typecheck, lint, unit tests on pull requests
+.github/workflows/ci.yml        typecheck, lint, unit tests, build and secret scan on pull requests
 .nvmrc
 .env.example                  variable names from section 9, no values
 ```
@@ -962,6 +963,6 @@ cypress.config.ts
 
 - **Server values** are read through `src/server/env.ts`, which validates them with zod the first time they are used and fails with the name of any missing variable.
 - **Browser values** are read through `src/client/env.ts` as literal `process.env.NEXT_PUBLIC_...` expressions, the form Next.js replaces at build time.
-- Only the two `NEXT_PUBLIC_` values reach the browser. `npm run check:secrets` fails if the secret key, the model key or the webhook secret, or the prefixes `sb_secret_`, `sk-ant-` or `whsec_`, appear in the build output.
+- Only the two `NEXT_PUBLIC_` values reach the browser. `npm run check:secrets` fails if the secret key, the model key or the webhook secret, a key-shaped string (`sb_secret_`, `sk-ant-` or `whsec_` followed by key characters; the bare `sb_secret_` is allowed because supabase-js uses it to tell key types apart), the Anthropic API host or the system prompt appear in the build output. CI runs it after `next build` on every pull request.
 - `scripts/seed.ts` and `scripts/write-env.ts` take the Supabase keys from `supabase status` directly, so they run before `.env.local` exists.
 - `.env.example` lists every variable name with no values.
