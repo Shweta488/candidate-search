@@ -48,7 +48,7 @@ Each spec runs at desktop width and at 390 px, with a WCAG 2.1 AA `cy.checkA11y(
 | `saved-searches.cy.ts` | save from results, the newest saved searches on the search start page, run on the free plan, used-up free search, delete |
 | `upgrade.cy.ts` | the Upgrade dialog from the plan pill and the limit panel, focus, company name |
 
-`npm run screenshots` (`cypress/tour/screens.cy.ts`, not part of `npm run e2e`) retakes the README screenshots in `docs/screenshots/`. It sends filters, so it calls no model.
+`npm run screenshots` (`cypress/tour/screens.cy.ts`, not part of `npm run e2e`) retakes the screenshots for the README and REVIEWING.md in `docs/screenshots/`. It sends filters, so it calls no model.
 
 ## Manual checklist (final pass)
 
