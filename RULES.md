@@ -76,4 +76,4 @@ Plus, when the change touches them: `npm run test:integration` (Jest, against th
 
 ## 7. Files that must never be committed
 
-`.env`, `.env.local`, any real API key, `node_modules`, `.next`, Supabase local volumes. `data/*.json` **is** committed because `make setup` loads it.
+`.env`, `.env.local`, any real API key, `node_modules`, `.next`, Supabase local volumes. The original dataset isn’t included.

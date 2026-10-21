@@ -1,6 +1,6 @@
 # Testing strategy
 
-Each grading area gets an automated check that runs against the real local stack, so we see the same numbers the grader will.
+Each grading area gets an automated check that runs against the real local stack, so the checks match real usage.
 
 ## Levels
 

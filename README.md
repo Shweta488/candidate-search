@@ -19,12 +19,12 @@ Open http://localhost:3000 and sign in as `recruiter@acme.test` or `recruiter@gl
 
 ## How search works
 
-The data is fully structured with closed vocabularies (13 roles, 4 seniority levels, 10 cities, 79 skills, schools, degrees, company types), and the 10 sample briefs are reproduced exactly by AND-ing those fields, so search is a translation problem. Claude Haiku receives the brief and a forced tool whose schema lists every allowed value as an enum. The validated filters go to one static SQL statement as typed parameters. Every match is stored with a fixed rank, so paging is a primary-key read and each person appears exactly once.
+The data is fully structured with closed vocabularies (13 roles, 4 seniority levels, 10 cities, 79 skills, schools, degrees, company types), and the 10 example briefs are reproduced exactly by AND-ing those fields, so search is a translation problem. Claude Haiku receives the brief and a forced tool whose schema lists every allowed value as an enum. The validated filters go to one static SQL statement as typed parameters. Every match is stored with a fixed rank, so paging is a primary-key read and each person appears exactly once.
 
 - **Understanding the brief:** Claude maps phrasing to exact values ("Golang" is Go, "NYC" is New York). "Engineers" or "developers" with no qualifier mean every engineering role, so "software engineers in California" finds all 831.
 - **Ranking:** every result matches every requirement. Closer matches come first (more of the brief's companies, schools or degrees), then open to work, then most experienced.
 - **Why not keyword or embedding search:** headlines and job descriptions are generated from the same structured fields, so they add nothing to match on, and fuzzy matching would add wrong people.
-- **Accuracy:** `npm run eval:search` scores the 10 sample briefs and 15 of my own (synonyms, states, years, umbrella titles, unanswerable asks): precision and recall are 100% on all 25.
+- **Accuracy:** `npm run eval:search` scores the 10 example briefs and 15 of my own (synonyms, states, years, umbrella titles, unanswerable asks): precision and recall are 100% on all 25.
 
 ## Keeping the LLM honest
 

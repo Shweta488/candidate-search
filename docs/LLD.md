@@ -7,7 +7,7 @@ Builds on [ARCHITECTURE.md](ARCHITECTURE.md).
 ### 1.1 Conventions
 
 - **Auth:** every route except `POST /api/billing/events` requires `Authorization: Bearer <supabase access token>`. Missing or invalid: `401`.
-- **Format:** JSON in and out, `snake_case` keys (matches the brief's contract, for example `search_id`).
+- **Format:** JSON in and out, `snake_case` keys (matches the API contract, for example `search_id`).
 - **Errors:** always `{ "error": { "code": "<machine_code>", "message": "<human sentence>" } }`.
 - **Not mine = not found:** a resource that belongs to another company returns `404`, never `403`, so the API never confirms it exists.
 - **Body size:** request bodies over 16 KB are rejected with `400`. The webhook accepts up to 1 MB, because a full Stripe event can be larger than 16 KB.
@@ -670,15 +670,16 @@ Order is decided by `event.created`, never by the signature's `t`, which changes
 
 The plan is not stored: `is_paid` (4.6) reads `subscriptions` on every request.
 
-### 5.5 Sample replay
+### 5.5 Example scenario
+How the rules play out for a typical sequence of events:
 
 | # | Event | Outcome | Plans after |
 |---|---|---|---|
-| 1 | acme `created`, active | applied | acme paid, globex free |
-| 2 | same event again | duplicate | unchanged |
-| 3 | globex `updated`, active (created 1320) | applied | acme paid, globex paid |
-| 4 | globex `created`, incomplete (created 1260) | stale | unchanged |
-| 5 | acme `deleted`, canceled | applied | **acme free, globex paid** |
+| 1 | Company A subscription `created`, active | applied | A paid |
+| 2 | The same event delivered again | duplicate | unchanged |
+| 3 | Company B subscription `updated`, active | applied | A paid, B paid |
+| 4 | An older Company B event (`created`, incomplete) arrives late | stale | unchanged |
+| 5 | Company A subscription `deleted`, canceled | applied | **A free, B paid** |
 
 ## 6. Frontend
 

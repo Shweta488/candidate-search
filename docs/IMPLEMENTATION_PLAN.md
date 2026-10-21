@@ -143,7 +143,7 @@ Branch `s11-ui-polish`. FR1, FR2, FR4, FR5. LLD 1.3, 3.7, 6.2, 6.5, 6.7. From a 
   - `docs: retake README screenshots and record the UI decisions`
 
 ### S12 Submission fixes
-Branch `s12-submission-fixes`. NFR5, NFR6, FR4, FR5. LLD 1.1, 1.5, 1.6, 3.3, 5.3. From a final review against the assessment brief.
+Branch `s12-submission-fixes`. NFR5, NFR6, FR4, FR5. LLD 1.1, 1.5, 1.6, 3.3, 5.3. 
 
 - **Done when:** a slow Claude call answers instead of failing the search; the webhook returns 400 only for a bad signature; two shortlists can have the same name; saving a search accepts any filters object; the README is one page.
 - **Tests:** unit and integration for each change; Cypress for shortlists and saved searches; `eval:search` still 100%.

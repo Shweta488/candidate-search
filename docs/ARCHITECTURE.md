@@ -39,7 +39,7 @@ and the system should:
 
 Sign-up, password reset, invites; real Stripe checkout (an Upgrade dialog explains it); candidate contact details; email; deployment.
 
-**Release.** This is an assessment that runs locally only (`make setup`, `make dev`), so there are no release steps. For production the next steps would be: preview, staging and production environments; migrations applied by CI before each deploy; secrets in a managed store; the webhook endpoint registered with Stripe per environment; error and latency monitoring on search and billing; and a rollback plan for code and migrations.
+**Release.** This is a project that runs locally only (`make setup`, `make dev`), so there are no release steps. For production the next steps would be: preview, staging and production environments; migrations applied by CI before each deploy; secrets in a managed store; the webhook endpoint registered with Stripe per environment; error and latency monitoring on search and billing; and a rollback plan for code and migrations.
 
 ## 2. Core entities
 
@@ -482,19 +482,11 @@ Decisions made while designing and building, with the reason for each. Section 5
 | Oct 9 | Search | No keyword (lexical) or embedding (semantic) search, and no custom index | Headlines and job descriptions are generated from the structured fields, so they add nothing to match on; fuzzy matching adds wrong people and can't return nobody. SQL already takes under 100 ms |
 | Oct 9 | Search | "Engineer", "software engineer" or "developer" with no qualifier means every engineering role | Otherwise "software engineers" returns nobody and "staff engineers" includes non-engineers |
 | Oct 9 | Search | Rank closer matches first (more of the brief's values in multi-value fields), then open to work, then experience | Puts the best of the right people on page 1 |
-| Oct 9 | Search | No brief → filters cache yet | The graders run each brief once and the 3 s target is met without it; kept as a next step |
+| Oct 9 | Search | No brief → filters cache yet | Each brief usually runs once and the 3 s target is met without it; kept as a next step |
 | Oct 9 | Free plan | Adding a filter to a search already run still counts as a new search, for now | Adding a filter only narrows results the recruiter was already given, so it could safely be free, but the server would have to prove the new filters are a strict narrowing of a stored search, and a mistake there is a free-plan bypass. Listed as a next step |
 | Oct 9 | UI | After Sign out, the next sign-in opens Search; a link opened while signed out still returns to its page | Signing out on one page and in as another company used to land on that page |
 | Oct 10 | Shortlists | Two lists may have the same name | The contract only asks that creating a list returns its `{ id }`, so a repeated name must not be an error; the list id, not the name, identifies a list |
 | Oct 9 | Search | The Claude request stays as it is: thinking off and effort `low` were both measured and neither made a search faster | Across 4 briefs the means were 1.81 s (as is), 1.85 s (thinking off) and 1.80 s (effort low), with the same filters. Most of the time is fixed per call, not output |
-
-### 7.3 Facts from the data that shaped these decisions
-
-- 5,000 candidates, all US: 10 cities, 13 roles, 4 seniority levels (junior 0 to 2 years, mid 3 to 5, senior 6 to 9, staff 10 to 15), 79 skills, 13 schools, 5 degrees, 14 fields of study, 28 companies, 2 company types.
-- Experience 0 is always the current job; each candidate has exactly one education entry.
-- In `data/queries.json`, "senior" is exact (not staff), "worked at a startup" means any experience at a `startup` company, "enterprise sales experience" is the skill `Enterprise Sales`, and "speaks Japanese" has no data, so the expected answer is nobody.
-- "React engineers" in the first sample is the skill React with no role: adding the role Frontend Engineer returns 6 people instead of the expected 21.
-- `data/stripe-events.json` signatures verify with the secret `whsec_test_sample` used as-is. Expected final plans: acme free, globex paid.
 
 ## 8. Tradeoffs
 
